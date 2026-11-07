@@ -1,0 +1,3 @@
+# Module VENDEUR — /vendeur/...
+
+Photos, versements, équipe, états des lieux et exports.

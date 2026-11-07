@@ -1,0 +1,7 @@
+packages:
+  - "1-FRONTEND/*"
+  - "1-FRONTEND/commun/*"
+  - "2-BACKEND/*"
+  - "3-SECURITE/*"
+allowBuilds:
+  esbuild: true

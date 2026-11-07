@@ -1,0 +1,6 @@
+{
+  "name": "@auto/config",
+  "private": true,
+  "files": ["tsconfig.base.json"],
+  "exports": { "./tsconfig.base.json": "./tsconfig.base.json" }
+}

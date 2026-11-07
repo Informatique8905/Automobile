@@ -1,0 +1,3 @@
+# Module ADMINISTRATEUR — /administrateur/...
+
+Agents IA, documents sensibles, incidents, vie privée, remboursements et versements.

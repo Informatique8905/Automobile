@@ -1,0 +1,7 @@
+{
+  "name": "@auto/ui",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts", "./jetons.css": "./src/jetons.css" },
+  "dependencies": { "react": "^19.1.1" }
+}

@@ -1,0 +1,1 @@
+export const configuration = () => ({ port: Number(process.env.PORT ?? 3003), supabaseUrl: process.env.SUPABASE_URL, supabaseSecretKey: process.env.SUPABASE_SECRET_KEY, jekoSecret: process.env.JEKO_SECRET_KEY, fneSecret: process.env.FNE_SECRET_KEY });

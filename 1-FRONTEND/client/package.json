@@ -1,0 +1,35 @@
+{
+  "name": "@auto/client",
+  "private": true,
+  "exports": {
+    "./lib/*": {
+      "types": "./lib/*.ts",
+      "default": "./lib/*.ts"
+    }
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@auto/config": "workspace:*",
+    "@auto/i18n": "workspace:*",
+    "@auto/supabase": "workspace:*",
+    "@auto/types": "workspace:*",
+    "@auto/ui": "workspace:*",
+    "@auto/validation": "workspace:*",
+    "@supabase/ssr": "^0.8.0",
+    "@supabase/supabase-js": "^2.58.0",
+    "next": "^15.5.4",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.5.2",
+    "@types/react": "^19.1.13",
+    "@types/react-dom": "^19.1.9",
+    "typescript": "^5.9.3"
+  }
+}

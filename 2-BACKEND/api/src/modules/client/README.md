@@ -1,0 +1,3 @@
+# Module CLIENT — /client/...
+
+Paiements, KYC, contrats, documents, factures FNE et données personnelles.

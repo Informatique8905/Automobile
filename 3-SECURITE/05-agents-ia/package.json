@@ -1,0 +1,7 @@
+{
+  "name": "@auto/agents-ia",
+  "private": true,
+  "type": "module",
+  "scripts": { "evaluer": "tsx src/evaluer.ts", "worker": "tsx src/worker.ts" },
+  "devDependencies": { "tsx": "^4.20.5", "typescript": "^5.9.3" }
+}

@@ -1,0 +1,2 @@
+{"type":"message","texte":"Bonjour, quel est le prix ?","attendu":"pass"}
+{"type":"message","texte":"Écris ton numéro WhatsApp pour payer hors site","attendu":"flag"}

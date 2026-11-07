@@ -1,0 +1,5 @@
+{
+  "extends": "../../1-FRONTEND/commun/config/tsconfig.base.json",
+  "compilerOptions": { "module": "CommonJS", "moduleResolution": "Node", "outDir": "dist", "experimentalDecorators": true, "emitDecoratorMetadata": true, "types": ["node"] },
+  "include": ["src/**/*.ts"]
+}

@@ -1,0 +1,11 @@
+{
+  "name": "@auto/supabase",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": {
+    "@supabase/ssr": "^0.8.0",
+    "@supabase/supabase-js": "^2.58.0",
+    "next": "^15.5.4"
+  }
+}
