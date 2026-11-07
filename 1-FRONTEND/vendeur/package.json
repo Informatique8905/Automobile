@@ -1,28 +1,29 @@
 {
-  "name": "@auto/vendeur",
+  "name": "vendeur",
+  "version": "1.0.0",
   "private": true,
+  "description": "Espace partenaire (loueurs, vendeurs)",
   "scripts": {
-    "dev": "next dev -p 3001",
+    "dev": "next dev --port 3001",
     "build": "next build",
-    "lint": "next lint",
+    "start": "next start --port 3001",
+    "lint": "eslint .",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@auto/client": "workspace:*",
-    "@auto/config": "workspace:*",
-    "@auto/i18n": "workspace:*",
-    "@auto/supabase": "workspace:*",
-    "@auto/types": "workspace:*",
-    "@auto/ui": "workspace:*",
-    "@auto/validation": "workspace:*",
-    "next": "^15.5.4",
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "next": "^16.0.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "@plateforme/ui": "workspace:*",
+    "@plateforme/supabase": "workspace:*",
+    "@plateforme/types": "workspace:*",
+    "@plateforme/validation": "workspace:*",
+    "@plateforme/i18n": "workspace:*",
+    "@plateforme/securite-applicative": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "^24.5.2",
-    "@types/react": "^19.1.13",
-    "@types/react-dom": "^19.1.9",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.0",
+    "@types/react": "^19.0.0",
+    "@types/node": "^22.0.0"
   }
 }

@@ -1,5 +1,17 @@
 {
   "extends": "../../1-FRONTEND/commun/config/tsconfig.base.json",
-  "compilerOptions": { "module": "CommonJS", "moduleResolution": "Node", "outDir": "dist", "experimentalDecorators": true, "emitDecoratorMetadata": true, "types": ["node"] },
-  "include": ["src/**/*.ts"]
+  "compilerOptions": {
+    "module": "commonjs",
+    "moduleResolution": "node10",
+    "target": "ES2023",
+    "lib": ["ES2023"],
+    "outDir": "dist",
+    "noEmit": false,
+    "allowImportingTsExtensions": false,
+    "rewriteRelativeImportExtensions": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "jsx": "preserve"
+  },
+  "include": ["src"]
 }

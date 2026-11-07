@@ -1,6 +1,9 @@
 {
-  "name": "@auto/types",
+  "name": "@plateforme/types",
+  "version": "1.0.0",
   "private": true,
+  "description": "Types TypeScript générés depuis la base Supabase",
   "type": "module",
-  "exports": { ".": "./src/index.ts" }
+  "main": "./src/index.ts",
+  "types": "./src/index.ts"
 }

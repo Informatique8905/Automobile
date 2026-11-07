@@ -1,10 +1,38 @@
 {
-  "name": "@auto/api",
+  "name": "api",
+  "version": "1.0.0",
   "private": true,
-  "scripts": { "dev": "nest start --watch", "build": "nest build", "start": "node dist/main.js", "typecheck": "tsc --noEmit" },
-  "dependencies": {
-    "@nestjs/common": "^11.1.3", "@nestjs/config": "^4.0.2", "@nestjs/core": "^11.1.3", "@nestjs/platform-express": "^11.1.3",
-    "@supabase/supabase-js": "^2.58.0", "class-transformer": "^0.5.1", "class-validator": "^0.15.1", "reflect-metadata": "^0.2.2", "rxjs": "^7.8.2"
+  "description": "API NestJS (Render) : paiement Jeko, factures FNE, KYC, agents IA, notifications, PDF, images",
+  "scripts": {
+    "dev": "nest start --watch",
+    "build": "nest build",
+    "start": "node dist/main.js",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit",
+    "test": "jest"
   },
-  "devDependencies": { "@nestjs/cli": "^11.0.10", "@types/node": "^24.5.2", "typescript": "^5.9.3" }
+  "dependencies": {
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/core": "^11.0.0",
+    "@nestjs/platform-express": "^11.0.0",
+    "@nestjs/throttler": "^6.4.0",
+    "@supabase/supabase-js": "^2.50.0",
+    "@plateforme/securite-applicative": "workspace:*",
+    "@plateforme/agents-ia": "workspace:*",
+    "@plateforme/validation": "workspace:*",
+    "helmet": "^8.0.0",
+    "jose": "^6.0.0",
+    "pino": "^9.0.0",
+    "sharp": "^0.34.0",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.0",
+    "@nestjs/testing": "^11.0.0",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.0.0",
+    "jest": "^30.0.0",
+    "ts-jest": "^29.0.0",
+    "typescript": "^5.9.0"
+  }
 }

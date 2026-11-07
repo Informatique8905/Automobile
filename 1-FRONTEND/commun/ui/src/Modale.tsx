@@ -1,2 +1,18 @@
-import type { ReactNode } from "react";
-export function Modale({ children }: { children: ReactNode }) { return <dialog open>{children}</dialog>; }
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * COMPOSANT · Fenêtre modale
+ * Application : commun (les 3 applications)
+ * ═══════════════════════════════════════════════════════════════════════════
+ * CONTENU
+ *   • Piège du focus, fermeture par Échap
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
+
+export interface ModaleProps {
+  // À définir
+}
+
+export function Modale(_props: ModaleProps) {
+  return null; // À développer
+}

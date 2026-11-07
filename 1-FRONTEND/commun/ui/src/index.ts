@@ -1,14 +1,21 @@
-export { Accordeon } from "./Accordeon";
-export { Badge } from "./Badge";
-export { BarreProgression } from "./BarreProgression";
-export { Bouton } from "./Bouton";
-export { Champ } from "./Champ";
-export { ChampTelephone } from "./ChampTelephone";
-export { CurseurDouble } from "./CurseurDouble";
-export { EtatVide } from "./EtatVide";
-export { Modale } from "./Modale";
-export { Onglets } from "./Onglets";
-export { Prix } from "./Prix";
-export { Puce } from "./Puce";
-export { Squelette } from "./Squelette";
-export { Toast } from "./Toast";
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * MODULE · Point d'entrée du design system
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
+
+export * from './Bouton.tsx';
+export * from './Champ.tsx';
+export * from './ChampTelephone.tsx';
+export * from './Puce.tsx';
+export * from './CurseurDouble.tsx';
+export * from './Onglets.tsx';
+export * from './Accordeon.tsx';
+export * from './Modale.tsx';
+export * from './Badge.tsx';
+export * from './BarreProgression.tsx';
+export * from './Toast.tsx';
+export * from './Prix.tsx';
+export * from './EtatVide.tsx';
+export * from './Squelette.tsx';

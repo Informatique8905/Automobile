@@ -1,1 +1,28 @@
-:root { --couleur-primaire: #0057b8; --couleur-accent: #ff6b00; --rayon: 0.75rem; --police: system-ui, sans-serif; }
+/* ═══════════════════════════════════════════════════════════════════
+ * JETONS DE DESIGN — couleurs, espacements, typographie, rayons
+ * Une seule source pour les 3 applications. Contrastes vérifiés WCAG 2.2 AA
+ * (texte normal ≥ 4,5:1). Couleurs de marque à remplacer par votre charte.
+ * ═══════════════════════════════════════════════════════════════════ */
+:root {
+  --couleur-primaire: #0b5d3b;        /* à remplacer par la couleur de marque */
+  --couleur-primaire-texte: #ffffff;
+  --couleur-accent: #f59e0b;
+  --couleur-texte: #111827;
+  --couleur-texte-secondaire: #4b5563;
+  --couleur-fond: #ffffff;
+  --couleur-fond-doux: #f3f4f6;
+  --couleur-bordure: #d1d5db;
+  --couleur-succes: #15803d;
+  --couleur-alerte: #b45309;
+  --couleur-erreur: #b91c1c;
+
+  --police: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; /* pas de police externe : plus rapide en 3G */
+  --taille-texte: 16px;               /* jamais moins de 16 px sur mobile (pas de zoom automatique) */
+  --rayon: 12px;
+  --espace-1: 4px; --espace-2: 8px; --espace-3: 12px; --espace-4: 16px; --espace-6: 24px; --espace-8: 32px;
+  --cible-tactile: 44px;              /* taille minimale d'un bouton */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}

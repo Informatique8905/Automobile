@@ -1,3 +1,9 @@
-export interface Vehicule { id: string; marque: string; modele: string; }
-export interface Reservation { id: string; vehicule_id: string; statut: string; }
-export interface Paiement { id: string; reservation_id: string; montant_fcfa: number; statut: string; }
+/**
+ * FICHIER GÉNÉRÉ — ne pas modifier à la main.
+ * Régénérer après chaque migration :
+ *   pnpm db:types
+ *   (= npx supabase gen types typescript --local > 1-FRONTEND/commun/types/src/database.types.ts)
+ * Ces types décrivent les 86 tables, les énumérations et les fonctions RPC : une
+ * colonne renommée dans la base devient une erreur de compilation dans le frontend.
+ */
+export type Database = Record<string, never>; // remplacé par la génération

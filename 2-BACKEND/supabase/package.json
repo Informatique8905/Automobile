@@ -1,5 +1,0 @@
-{
-  "name": "@auto/supabase-db",
-  "private": true,
-  "scripts": { "test:migrations": "psql -f tests/supabase_stub.sql && for f in supabase/migrations/*.sql; do psql -f \"$f\"; done" }
-}

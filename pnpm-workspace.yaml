@@ -1,7 +1,13 @@
+# Un seul dépôt, plusieurs applications et paquets partagés
 packages:
-  - "1-FRONTEND/*"
+  # 1-FRONTEND : trois applications + paquets communs
+  - "1-FRONTEND/client"
+  - "1-FRONTEND/vendeur"
+  - "1-FRONTEND/administrateur"
   - "1-FRONTEND/commun/*"
-  - "2-BACKEND/*"
-  - "3-SECURITE/*"
-allowBuilds:
-  esbuild: true
+  # 2-BACKEND : API et base de données
+  - "2-BACKEND/api"
+  - "2-BACKEND/base-de-donnees"
+  # 3-SECURITE : code de sécurité partagé et agents IA
+  - "3-SECURITE/04-securite-applicative"
+  - "3-SECURITE/05-agents-ia"

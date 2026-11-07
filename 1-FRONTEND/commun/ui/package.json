@@ -1,7 +1,11 @@
 {
-  "name": "@auto/ui",
+  "name": "@plateforme/ui",
+  "version": "1.0.0",
   "private": true,
+  "description": "Design system partagé : composants accessibles (WCAG 2.2 AA) et jetons de design",
   "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
   "exports": { ".": "./src/index.ts", "./jetons.css": "./src/jetons.css" },
-  "dependencies": { "react": "^19.1.1" }
+  "peerDependencies": { "react": ">=19" }
 }

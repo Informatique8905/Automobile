@@ -1,1 +1,0 @@
--- BASE_DE_DONNEES.md — schéma généré à partir des migrations.

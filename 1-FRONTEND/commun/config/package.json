@@ -1,6 +1,6 @@
 {
-  "name": "@auto/config",
+  "name": "@plateforme/config",
+  "version": "1.0.0",
   "private": true,
-  "files": ["tsconfig.base.json"],
-  "exports": { "./tsconfig.base.json": "./tsconfig.base.json" }
+  "description": "Réglages partagés : TypeScript, ESLint"
 }

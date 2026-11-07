@@ -1,16 +1,20 @@
 {
-  "name": "automobile-platform",
+  "name": "plateforme-vehicules",
   "private": true,
-  "packageManager": "pnpm@12.16.1",
+  "description": "Plateforme de location et de vente de véhicules — Côte d'Ivoire",
+  "packageManager": "pnpm@10.0.0",
+  "engines": { "node": ">=22" },
   "scripts": {
-    "dev": "turbo run dev",
+    "dev": "turbo run dev --parallel",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
-    "test": "turbo run test"
+    "test": "turbo run test",
+    "db:types": "pnpm --filter base-de-donnees db:types",
+    "securite:audit": "pnpm audit --prod && gitleaks detect --no-banner"
   },
   "devDependencies": {
-    "turbo": "^2.5.4",
-    "typescript": "^5.9.3"
+    "turbo": "^2.5.0",
+    "typescript": "^5.9.0"
   }
 }

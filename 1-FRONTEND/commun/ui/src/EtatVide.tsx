@@ -1,2 +1,15 @@
-import type { ReactNode } from "react";
-export function EtatVide({ children }: { children?: ReactNode }) { return <p>{children ?? "Aucun résultat"}</p>; }
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * COMPOSANT · État vide / zéro résultat
+ * Application : commun (les 3 applications)
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
+
+export interface EtatVideProps {
+  // À définir
+}
+
+export function EtatVide(_props: EtatVideProps) {
+  return null; // À développer
+}

@@ -1,11 +1,24 @@
+# Dépendances et constructions
 node_modules/
 .next/
 dist/
-*.tsbuildinfo
-next-env.d.ts
+.turbo/
 coverage/
+
+# Secrets — ne JAMAIS les versionner
 .env
 .env.*
 !.env.example
-*.log
+*.pem
+*.key
+*.dump
+*.dump.gpg
+2-BACKEND/base-de-donnees/supabase/.env
+
+# Supabase local
+2-BACKEND/base-de-donnees/supabase/.branches
+2-BACKEND/base-de-donnees/supabase/.temp
+
+# Système
 .DS_Store
+*.log

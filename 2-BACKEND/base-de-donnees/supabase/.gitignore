@@ -1,0 +1,9 @@
+# Fichiers générés par le CLI Supabase
+.branches
+.temp
+
+# Secrets : ne jamais commiter
+.env
+.env.local
+.env.*.local
+.env.keys

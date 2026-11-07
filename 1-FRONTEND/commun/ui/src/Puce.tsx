@@ -1,2 +1,15 @@
-import type { ReactNode } from "react";
-export function Puce({ children }: { children: ReactNode }) { return <span>{children}</span>; }
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * COMPOSANT · Puce / pilule de filtre (chips)
+ * Application : commun (les 3 applications)
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
+
+export interface PuceProps {
+  // À définir
+}
+
+export function Puce(_props: PuceProps) {
+  return null; // À développer
+}
