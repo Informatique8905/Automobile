@@ -1,0 +1,45 @@
+@import "tailwindcss";
+@import "@plateforme/ui/jetons.css";
+
+@source "../../commun/ui/src";
+
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    font-size: var(--taille-texte);
+    font-family: var(--police);
+    line-height: var(--interligne);
+    color: var(--couleur-texte);
+    background-color: var(--couleur-fond-doux);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    min-height: 100dvh;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--couleur-primaire);
+    outline-offset: 2px;
+    border-radius: var(--rayon-sm);
+  }
+
+  a {
+    color: var(--couleur-orange-accessible);
+    text-decoration-skip-ink: auto;
+  }
+
+  a:hover {
+    text-decoration: underline;
+  }
+
+  img, video {
+    max-width: 100%;
+    height: auto;
+  }
+}

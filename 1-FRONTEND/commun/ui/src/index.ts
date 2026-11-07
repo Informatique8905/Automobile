@@ -5,6 +5,7 @@
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
+export * from './lib/utils';
 export * from './Bouton.tsx';
 export * from './Champ.tsx';
 export * from './ChampTelephone.tsx';

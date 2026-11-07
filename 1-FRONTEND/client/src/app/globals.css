@@ -1,0 +1,50 @@
+@import "tailwindcss";
+@import "@plateforme/ui/jetons.css";
+
+/* Scan des composants partagés (Tailwind v4 — @source explicite hors répertoire courant) */
+@source "../../commun/ui/src";
+
+/* Base — polices et comportements globaux */
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    font-size: var(--taille-texte);
+    font-family: var(--police);
+    line-height: var(--interligne);
+    color: var(--couleur-texte);
+    background-color: var(--couleur-fond);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    min-height: 100dvh;
+  }
+
+  /* Focus visible accessible */
+  :focus-visible {
+    outline: 3px solid var(--couleur-primaire);
+    outline-offset: 2px;
+    border-radius: var(--rayon-sm);
+  }
+
+  /* Liens */
+  a {
+    color: var(--couleur-orange-accessible);
+    text-decoration-skip-ink: auto;
+  }
+
+  a:hover {
+    text-decoration: underline;
+  }
+
+  /* Images responsive par défaut */
+  img, video {
+    max-width: 100%;
+    height: auto;
+  }
+}
