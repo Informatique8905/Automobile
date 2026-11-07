@@ -74,7 +74,7 @@ api_url = "http://127.0.0.1"
 # Boîte mail de test : tous les emails envoyés en local arrivent ici
 # → http://127.0.0.1:54324 (aucun email n'est réellement envoyé)
 # -----------------------------------------------------------------------------
-[inbucket]
+[local_smtp]
 enabled = true
 port = 54324
 
