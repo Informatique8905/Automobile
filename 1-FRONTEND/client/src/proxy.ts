@@ -16,7 +16,7 @@ const ROUTES_PRIVEES = [
   '/paiement',
 ];
 
-export async function middleware(requete: NextRequest) {
+export async function proxy(requete: NextRequest) {
   const { reponse, utilisateur } = await rafraichirSession(requete);
   const chemin = requete.nextUrl.pathname;
 

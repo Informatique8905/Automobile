@@ -5,21 +5,26 @@
  * ═══════════════════════════════════════════════════════════════════════════
  * CONTENU
  *   • Prénom + Nom, e-mail, mot de passe (force vérifiée)
- *   • Continuer avec Google / Apple
+ *   • Téléphone (+225, format CI) — enregistré dans le profil, non vérifié SMS pour l'instant
+ *   • Commune + quartier — enregistrés dans le profil
+ *   • Connexion Google / Apple si NEXT_PUBLIC_SSO_ACTIVE === "true"
  *   • Cases : CGU + confidentialité (obligatoires), marketing (facultatif)
  *
  * DONNÉES
  *   • Supabase Auth signUp / signInWithOAuth
- *   • Le profil et les consentements sont créés par trigger en base
+ *   • options.data.telephone, options.data.commune, options.data.quartier
+ *   • Le profil et les consentements sont créés par trigger en base (migration 0300)
  *
  * SÉCURITÉ
  *   • Mot de passe : 8 caractères min, minuscules + majuscules + chiffres
- *   • Message d'erreur générique si e-mail déjà utilisé (pas de fuite d'info)
+ *   • Message d'erreur générique si e-mail déjà utilisé
+ *   • Le téléphone sera vérifié par SMS dans une version ultérieure (OTP twilio)
  * ═══════════════════════════════════════════════════════════════════════════
  */
 'use client';
 
 import {
+  useEffect,
   useId,
   useLayoutEffect,
   useRef,
@@ -41,7 +46,13 @@ interface Champs {
   nom: string;
   email: string;
   motDePasse: string;
+  telephone: string;
+  cityId: string;
+  districtId: string;
 }
+
+interface Ville { id: number; name: string; }
+interface District { id: number; name: string; }
 
 type Erreurs = Partial<Record<keyof Champs | 'cgu', string>>;
 
@@ -63,6 +74,10 @@ const FORCE = [
 ] as const;
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+// Téléphone CI : 07 XX XX XX XX → 10 chiffres après le 0 (ou 8 chiffres sans l'indicatif 0)
+const TEL_CI_RE = /^(0[0-9]|[0-9])[0-9]{7}$/; // 8 ou 9 chiffres significatifs
+
+const SSO_ACTIF = process.env.NEXT_PUBLIC_SSO_ACTIVE === 'true';
 
 function valider(valeurs: Champs, cgu: boolean): Erreurs {
   const e: Erreurs = {};
@@ -72,6 +87,9 @@ function valider(valeurs: Champs, cgu: boolean): Erreurs {
   else if (!EMAIL_RE.test(valeurs.email.trim())) e.email = "Cette adresse e-mail n'est pas valide.";
   if (!valeurs.motDePasse) e.motDePasse = 'Choisissez un mot de passe.';
   else if (REGLES_MDP.some((r) => !r.test(valeurs.motDePasse))) e.motDePasse = 'Votre mot de passe doit respecter toutes les règles ci-dessous.';
+  if (valeurs.telephone.trim() && !TEL_CI_RE.test(valeurs.telephone.trim())) {
+    e.telephone = 'Numéro invalide (ex : 07 12 34 56 78 → saisissez 0712345678).';
+  }
   if (!cgu) e.cgu = 'Vous devez accepter les conditions générales pour continuer.';
   return e;
 }
@@ -90,7 +108,14 @@ export default function PageInscription() {
   const supabase = clientNavigateur();
 
   const [vue, setVue] = useState<Vue>('formulaire');
-  const [valeurs, setValeurs] = useState<Champs>({ prenom: '', nom: '', email: '', motDePasse: '' });
+  const [valeurs, setValeurs] = useState<Champs>({
+    prenom: '', nom: '', email: '', motDePasse: '',
+    telephone: '', cityId: '', districtId: '',
+  });
+  const [villes, setVilles] = useState<Ville[]>([]);
+  const [districts, setDistricts] = useState<District[]>([]);
+  const [chargementVilles, setChargementVilles] = useState(true);
+  const [chargementDistricts, setChargementDistricts] = useState(false);
   const [touche, setTouche] = useState<Partial<Record<keyof Champs, boolean>>>({});
   const [soumis, setSoumis] = useState(false);
   const [cgu, setCgu] = useState(false);
@@ -105,6 +130,7 @@ export default function PageInscription() {
   const nomRef = useRef<HTMLInputElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
   const mdpRef = useRef<HTMLInputElement>(null);
+  const telRef = useRef<HTMLInputElement>(null);
   const banniereRef = useRef<HTMLDivElement>(null);
   const deplacerFocus = useRef(false);
 
@@ -114,7 +140,37 @@ export default function PageInscription() {
     titreRef.current?.focus({ preventScroll: true });
   }, [vue]);
 
+  // Charger les villes au montage
+  useEffect(() => {
+    supabase
+      .from('cities')
+      .select('id, name')
+      .eq('is_active', true)
+      .order('name')
+      .then(({ data }) => {
+        if (data) setVilles(data as Ville[]);
+        setChargementVilles(false);
+      });
+  }, [supabase]);
+
+  // Charger les quartiers quand la ville change
+  useEffect(() => {
+    if (!valeurs.cityId) { setDistricts([]); return; }
+    setChargementDistricts(true);
+    supabase
+      .from('districts')
+      .select('id, name')
+      .eq('city_id', Number(valeurs.cityId))
+      .eq('is_active', true)
+      .order('name')
+      .then(({ data }) => {
+        if (data) setDistricts(data as District[]);
+        setChargementDistricts(false);
+      });
+  }, [supabase, valeurs.cityId]);
+
   const erreurs = valider(valeurs, cgu);
+
   const erreurVisible = (champ: keyof Champs | 'cgu') =>
     soumis || (champ !== 'cgu' && touche[champ as keyof Champs]) ? (erreurs[champ] ?? null) : null;
 
@@ -128,7 +184,7 @@ export default function PageInscription() {
 
   const occupe = enCours !== null;
   const passeReussites = REGLES_MDP.filter((r) => r.test(valeurs.motDePasse)).length;
-  const force = valeurs.motDePasse ? FORCE[passeReussites] : null;
+  const force = valeurs.motDePasse ? (FORCE[passeReussites] ?? null) : null;
 
   const soumettre = async (e: FormEvent) => {
     e.preventDefault();
@@ -136,14 +192,22 @@ export default function PageInscription() {
     setSoumis(true);
     const ordre = (['prenom', 'nom', 'email', 'motDePasse'] as const);
     const premierInvalide = ordre.find((c) => erreurs[c]);
-    if (premierInvalide || erreurs.cgu) {
+    if (premierInvalide || erreurs.cgu || erreurs.telephone) {
       if (premierInvalide) {
         ({ prenom: prenomRef, nom: nomRef, email: emailRef, motDePasse: mdpRef })[premierInvalide].current?.focus();
+      } else if (erreurs.telephone) {
+        telRef.current?.focus();
       }
       return;
     }
     setErreurFormulaire(null);
     setEnCours('submit');
+
+    // Téléphone : on stocke avec l'indicatif +225 mais sans vérification SMS pour l'instant
+    const telFormate = valeurs.telephone.trim()
+      ? `+225${valeurs.telephone.trim().replace(/\s/g, '')}`
+      : undefined;
+
     try {
       const { error } = await supabase.auth.signUp({
         email: valeurs.email.trim(),
@@ -152,6 +216,11 @@ export default function PageInscription() {
           data: {
             prenom: valeurs.prenom.trim(),
             nom: valeurs.nom.trim(),
+            // Téléphone stocké dans raw_user_meta_data, trigger le copie dans profiles
+            telephone: telFormate ?? null,
+            // IDs géographiques (FK vers cities et districts) — copiés dans profiles par le trigger
+            city_id: valeurs.cityId ? Number(valeurs.cityId) : null,
+            district_id: valeurs.districtId ? Number(valeurs.districtId) : null,
             marketing_consent: marketing,
           },
           emailRedirectTo: `${window.location.origin}/auth/callback`,
@@ -187,7 +256,7 @@ export default function PageInscription() {
   };
 
   const titreId = `${uid}-titre`;
-  const transition = {
+  const anim = {
     initial: { opacity: 0, y: 6, filter: 'blur(3px)' },
     animate: { opacity: 1, y: 0, filter: 'blur(0px)' },
     exit: { opacity: 0, y: -6, filter: 'blur(3px)' },
@@ -197,6 +266,7 @@ export default function PageInscription() {
   return (
     <div className="grid min-h-dvh lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
       <main className="flex flex-col bg-[var(--couleur-fond)]" aria-labelledby={titreId}>
+        {/* En-tête */}
         <header className="flex items-center justify-between gap-4 px-6 pt-6 md:px-10 md:pt-8">
           <a href="/" className="flex items-center gap-3 rounded-lg focus-visible:outline-2 focus-visible:outline-[var(--couleur-primaire)] focus-visible:outline-offset-2">
             <span className="grid size-9 place-items-center rounded-xl bg-[var(--couleur-primaire)] shadow-[var(--ombre-primaire)]" aria-hidden="true">
@@ -215,10 +285,10 @@ export default function PageInscription() {
         </header>
 
         <div className="flex flex-1 items-center justify-center px-6 py-10 md:px-10">
-          <div className="w-full max-w-[420px]">
+          <div className="w-full max-w-[440px]">
             <AnimatePresence mode="wait">
               {vue === 'formulaire' && (
-                <motion.div key="formulaire" {...transition}>
+                <motion.div key="formulaire" {...anim}>
                   <h1
                     id={titreId}
                     ref={titreRef}
@@ -231,56 +301,154 @@ export default function PageInscription() {
                     Accédez à des milliers de véhicules en Côte d'Ivoire.
                   </p>
 
-                  <div className="mt-7 grid grid-cols-2 gap-3">
-                    {(['google', 'apple'] as const).map((fournisseur) => (
-                      <button
-                        key={fournisseur}
-                        type="button"
-                        onClick={() => connecterSSO(fournisseur)}
-                        disabled={occupe && enCours !== fournisseur}
-                        aria-label={`Continuer avec ${fournisseur === 'google' ? 'Google' : 'Apple'}`}
-                        className={cn(
-                          'flex h-11 items-center justify-center gap-2.5 rounded-xl border border-[var(--couleur-bordure)] bg-[var(--couleur-fond)] text-[13px] font-medium text-[var(--couleur-texte)] shadow-[var(--ombre-sm)] transition-all',
-                          'hover:border-[var(--couleur-bordure-active)] hover:shadow-[var(--ombre)]',
-                          'focus-visible:outline-2 focus-visible:outline-[var(--couleur-primaire)] focus-visible:outline-offset-2',
-                          'disabled:opacity-50',
-                        )}
-                      >
-                        {enCours === fournisseur ? <Loader2 className="size-4 animate-spin" /> : fournisseur === 'google' ? <IconGoogle /> : <IconApple />}
-                        <span>{fournisseur === 'google' ? 'Google' : 'Apple'}</span>
-                      </button>
-                    ))}
-                  </div>
+                  {/* Boutons SSO — masqués si NEXT_PUBLIC_SSO_ACTIVE !== "true" */}
+                  {SSO_ACTIF && (
+                    <>
+                      <div className="mt-7 grid grid-cols-2 gap-3">
+                        {(['google', 'apple'] as const).map((f) => (
+                          <button key={f} type="button" onClick={() => connecterSSO(f)} disabled={occupe && enCours !== f} aria-label={`Continuer avec ${f === 'google' ? 'Google' : 'Apple'}`}
+                            className={cn('flex h-11 items-center justify-center gap-2.5 rounded-xl border border-[var(--couleur-bordure)] bg-[var(--couleur-fond)] text-[13px] font-medium text-[var(--couleur-texte)] shadow-[var(--ombre-sm)] transition-all hover:border-[var(--couleur-bordure-active)] focus-visible:outline-2 focus-visible:outline-[var(--couleur-primaire)] focus-visible:outline-offset-2 disabled:opacity-50')}>
+                            {enCours === f ? <Loader2 className="size-4 animate-spin" /> : f === 'google' ? <IconGoogle /> : <IconApple />}
+                            <span>{f === 'google' ? 'Google' : 'Apple'}</span>
+                          </button>
+                        ))}
+                      </div>
+                      <div className="my-6 flex items-center gap-3" role="presentation">
+                        <span className="h-px flex-1 bg-[var(--couleur-bordure)]" />
+                        <span className="text-[11px] font-medium uppercase tracking-widest text-[var(--couleur-texte-faible)]">ou par e-mail</span>
+                        <span className="h-px flex-1 bg-[var(--couleur-bordure)]" />
+                      </div>
+                    </>
+                  )}
 
-                  <div className="my-6 flex items-center gap-3" role="presentation">
-                    <span className="h-px flex-1 bg-[var(--couleur-bordure)]" />
-                    <span className="text-[11px] font-medium uppercase tracking-widest text-[var(--couleur-texte-faible)]">ou par e-mail</span>
-                    <span className="h-px flex-1 bg-[var(--couleur-bordure)]" />
-                  </div>
-
-                  <form noValidate onSubmit={soumettre} className="flex flex-col gap-4">
+                  {/* Formulaire principal */}
+                  <form noValidate onSubmit={soumettre} className={cn('flex flex-col gap-4', !SSO_ACTIF && 'mt-7')}>
                     {erreurFormulaire && (
-                      <div
-                        ref={banniereRef}
-                        tabIndex={-1}
-                        role="alert"
-                        className="flex gap-3 rounded-xl border border-[var(--couleur-erreur)]/20 bg-[var(--couleur-erreur-fond)] px-3.5 py-3 text-[12.5px] leading-relaxed text-[var(--couleur-texte)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--couleur-erreur)]"
-                      >
+                      <div ref={banniereRef} tabIndex={-1} role="alert" className="flex gap-3 rounded-xl border border-[var(--couleur-erreur)]/20 bg-[var(--couleur-erreur-fond)] px-3.5 py-3 text-[12.5px] leading-relaxed outline-none focus-visible:ring-2 focus-visible:ring-[var(--couleur-erreur)]">
                         <svg viewBox="0 0 16 16" aria-hidden="true" className="mt-0.5 size-3.5 shrink-0 text-[var(--couleur-erreur)]">
                           <path d="M8 1.75 15 14H1L8 1.75Z" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
                           <path d="M8 6.25v3.5M8 11.6v.1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                         </svg>
-                        <p>{erreurFormulaire}</p>
+                        <p className="text-[var(--couleur-texte)]">{erreurFormulaire}</p>
                       </div>
                     )}
 
+                    {/* Prénom + Nom */}
                     <div className="grid grid-cols-2 gap-3">
-                      <ChampInscription ref={prenomRef} id={`${uid}-prenom`} label="Prénom" autoComplete="given-name" placeholder="Awa" value={valeurs.prenom} onChange={mettreAJour('prenom')} onBlur={desactiver('prenom')} readOnly={occupe} error={erreurVisible('prenom')} />
-                      <ChampInscription ref={nomRef} id={`${uid}-nom`} label="Nom" autoComplete="family-name" placeholder="Koné" value={valeurs.nom} onChange={mettreAJour('nom')} onBlur={desactiver('nom')} readOnly={occupe} error={erreurVisible('nom')} />
+                      <ChampTexte ref={prenomRef} id={`${uid}-prenom`} label="Prénom" autoComplete="given-name" placeholder="Awa" value={valeurs.prenom} onChange={mettreAJour('prenom')} onBlur={desactiver('prenom')} readOnly={occupe} error={erreurVisible('prenom')} />
+                      <ChampTexte ref={nomRef} id={`${uid}-nom`} label="Nom" autoComplete="family-name" placeholder="Koné" value={valeurs.nom} onChange={mettreAJour('nom')} onBlur={desactiver('nom')} readOnly={occupe} error={erreurVisible('nom')} />
                     </div>
 
-                    <ChampInscription ref={emailRef} id={`${uid}-email`} label="Adresse e-mail" type="email" inputMode="email" autoComplete="email" placeholder="vous@exemple.ci" value={valeurs.email} onChange={mettreAJour('email')} onBlur={desactiver('email')} readOnly={occupe} error={erreurVisible('email')} />
+                    {/* E-mail */}
+                    <ChampTexte ref={emailRef} id={`${uid}-email`} label="Adresse e-mail" type="email" inputMode="email" autoComplete="email" placeholder="vous@exemple.ci" value={valeurs.email} onChange={mettreAJour('email')} onBlur={desactiver('email')} readOnly={occupe} error={erreurVisible('email')} />
 
+                    {/* Téléphone CI */}
+                    <div className="flex flex-col gap-1.5">
+                      <label htmlFor={`${uid}-tel`} className="text-[12.5px] font-medium text-[var(--couleur-texte)]">
+                        Téléphone{' '}
+                        <span className="font-normal text-[var(--couleur-texte-secondaire)]">(facultatif)</span>
+                      </label>
+                      <div className="relative flex items-center">
+                        {/* Indicatif +225 affiché en préfixe */}
+                        <span className="absolute left-3 select-none text-[13px] font-medium text-[var(--couleur-texte-secondaire)]">+225</span>
+                        <input
+                          ref={telRef}
+                          id={`${uid}-tel`}
+                          type="tel"
+                          inputMode="tel"
+                          autoComplete="tel-national"
+                          placeholder="07 12 34 56 78"
+                          value={valeurs.telephone}
+                          onChange={mettreAJour('telephone')}
+                          onBlur={desactiver('telephone')}
+                          readOnly={occupe}
+                          aria-invalid={erreurVisible('telephone') ? true : undefined}
+                          aria-describedby={erreurVisible('telephone') ? `${uid}-tel-erreur` : `${uid}-tel-indice`}
+                          className={cn(
+                            'h-10 w-full rounded-xl border border-[var(--couleur-bordure)] bg-[var(--couleur-fond-moyen)] pl-14 pr-3.5 text-[14px] text-[var(--couleur-texte)] placeholder:text-[var(--couleur-texte-faible)] transition-[border-color,box-shadow]',
+                            'focus:border-[var(--couleur-primaire)] focus:bg-[var(--couleur-fond)] focus:outline-none focus:shadow-[0_0_0_3px_rgb(255_107_0/0.15)]',
+                            erreurVisible('telephone') && 'border-[var(--couleur-erreur)]',
+                          )}
+                        />
+                      </div>
+                      {erreurVisible('telephone')
+                        ? <p id={`${uid}-tel-erreur`} role="alert" className="text-[12px] text-[var(--couleur-erreur)]">{erreurVisible('telephone')}</p>
+                        : <p id={`${uid}-tel-indice`} className="text-[12px] text-[var(--couleur-texte-faible)]">La vérification par SMS sera disponible prochainement.</p>
+                      }
+                    </div>
+
+                    {/* Ville + Quartier (depuis les tables cities et districts) */}
+                    <div className="grid grid-cols-2 gap-3">
+                      {/* Ville */}
+                      <div className="flex flex-col gap-1.5">
+                        <label htmlFor={`${uid}-ville`} className="text-[12.5px] font-medium text-[var(--couleur-texte)]">
+                          Ville{' '}
+                          <span className="font-normal text-[var(--couleur-texte-secondaire)]">(facultatif)</span>
+                        </label>
+                        <div className="relative">
+                          <select
+                            id={`${uid}-ville`}
+                            value={valeurs.cityId}
+                            onChange={(e) => setValeurs((prev) => ({ ...prev, cityId: e.target.value, districtId: '' }))}
+                            disabled={occupe || chargementVilles}
+                            className={cn(
+                              'h-10 w-full appearance-none rounded-xl border border-[var(--couleur-bordure)] bg-[var(--couleur-fond-moyen)] pl-3.5 pr-8 text-[14px] text-[var(--couleur-texte)] transition-[border-color,box-shadow]',
+                              'focus:border-[var(--couleur-primaire)] focus:bg-[var(--couleur-fond)] focus:outline-none focus:shadow-[0_0_0_3px_rgb(255_107_0/0.15)]',
+                              'disabled:opacity-60',
+                              !valeurs.cityId && 'text-[var(--couleur-texte-faible)]',
+                            )}
+                          >
+                            <option value="">
+                              {chargementVilles ? 'Chargement…' : 'Ville'}
+                            </option>
+                            {villes.map((v) => (
+                              <option key={v.id} value={String(v.id)}>{v.name}</option>
+                            ))}
+                          </select>
+                          <svg viewBox="0 0 16 16" aria-hidden="true" className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 size-3.5 text-[var(--couleur-texte-secondaire)]">
+                            <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </div>
+                      </div>
+
+                      {/* Quartier */}
+                      <div className="flex flex-col gap-1.5">
+                        <label htmlFor={`${uid}-quartier`} className="text-[12.5px] font-medium text-[var(--couleur-texte)]">
+                          Quartier{' '}
+                          <span className="font-normal text-[var(--couleur-texte-secondaire)]">(facultatif)</span>
+                        </label>
+                        <div className="relative">
+                          <select
+                            id={`${uid}-quartier`}
+                            value={valeurs.districtId}
+                            onChange={(e) => setValeurs((prev) => ({ ...prev, districtId: e.target.value }))}
+                            disabled={occupe || !valeurs.cityId || chargementDistricts}
+                            className={cn(
+                              'h-10 w-full appearance-none rounded-xl border border-[var(--couleur-bordure)] bg-[var(--couleur-fond-moyen)] pl-3.5 pr-8 text-[14px] text-[var(--couleur-texte)] transition-[border-color,box-shadow]',
+                              'focus:border-[var(--couleur-primaire)] focus:bg-[var(--couleur-fond)] focus:outline-none focus:shadow-[0_0_0_3px_rgb(255_107_0/0.15)]',
+                              'disabled:opacity-60',
+                              !valeurs.districtId && 'text-[var(--couleur-texte-faible)]',
+                            )}
+                          >
+                            <option value="">
+                              {!valeurs.cityId
+                                ? 'Choisir une ville'
+                                : chargementDistricts
+                                ? 'Chargement…'
+                                : 'Quartier'}
+                            </option>
+                            {districts.map((d) => (
+                              <option key={d.id} value={String(d.id)}>{d.name}</option>
+                            ))}
+                          </select>
+                          <svg viewBox="0 0 16 16" aria-hidden="true" className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 size-3.5 text-[var(--couleur-texte-secondaire)]">
+                            <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Mot de passe */}
                     <div className="flex flex-col gap-1.5">
                       <label htmlFor={`${uid}-mdp`} className="text-[12.5px] font-medium text-[var(--couleur-texte)]">Mot de passe</label>
                       <div className="relative flex items-center">
@@ -302,7 +470,7 @@ export default function PageInscription() {
                             erreurVisible('motDePasse') && 'border-[var(--couleur-erreur)]',
                           )}
                         />
-                        <button type="button" onClick={() => setAfficherMdp((v) => !v)} aria-label={afficherMdp ? 'Masquer' : 'Afficher'} aria-pressed={afficherMdp} className="absolute right-1 flex size-8 items-center justify-center rounded-lg text-[var(--couleur-texte-secondaire)] transition-colors hover:text-[var(--couleur-texte)] focus-visible:outline-2 focus-visible:outline-[var(--couleur-primaire)]">
+                        <button type="button" onClick={() => setAfficherMdp((v) => !v)} aria-label={afficherMdp ? 'Masquer' : 'Afficher'} aria-pressed={afficherMdp} className="absolute right-1 flex size-8 items-center justify-center rounded-lg text-[var(--couleur-texte-secondaire)] hover:text-[var(--couleur-texte)] focus-visible:outline-2 focus-visible:outline-[var(--couleur-primaire)]">
                           {afficherMdp ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                         </button>
                       </div>
@@ -310,19 +478,15 @@ export default function PageInscription() {
                       {(valeurs.motDePasse || mdpFocus) && <JaugeMdp valeur={valeurs.motDePasse} reussites={passeReussites} force={force} />}
                     </div>
 
+                    {/* Cases à cocher */}
                     <div className="flex flex-col gap-2.5 rounded-xl border border-[var(--couleur-bordure)] bg-[var(--couleur-fond-moyen)] p-3.5">
-                      <CaseCocher id={`${uid}-cgu`} checked={cgu} onChange={setCgu} required error={erreurVisible('cgu') ?? undefined} label={<>J'accepte les <a href="/conditions" className="text-[var(--couleur-orange-accessible)] hover:underline">CGU</a> et la <a href="/confidentialite" className="text-[var(--couleur-orange-accessible)] hover:underline">politique de confidentialité</a> <span className="text-[var(--couleur-erreur)]" aria-hidden="true">*</span></>} />
+                      <CaseCocher id={`${uid}-cgu`} checked={cgu} onChange={setCgu} required error={erreurVisible('cgu') ?? undefined}
+                        label={<>J'accepte les <a href="/conditions" className="text-[var(--couleur-orange-accessible)] hover:underline">CGU</a> et la <a href="/confidentialite" className="text-[var(--couleur-orange-accessible)] hover:underline">politique de confidentialité</a> <span className="text-[var(--couleur-erreur)]" aria-hidden="true">*</span></>} />
                       <CaseCocher id={`${uid}-marketing`} checked={marketing} onChange={setMarketing} label="Recevoir les offres exclusives par e-mail (facultatif)" />
                     </div>
 
-                    <button
-                      type="submit"
-                      disabled={occupe && enCours !== 'submit'}
-                      className={cn(
-                        'flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[var(--couleur-primaire)] text-[14px] font-semibold text-white shadow-[var(--ombre-primaire)] transition-all',
-                        'hover:bg-[var(--couleur-primaire-sombre)] focus-visible:outline-2 focus-visible:outline-[var(--couleur-primaire)] focus-visible:outline-offset-2 active:scale-[0.99] disabled:opacity-60',
-                      )}
-                    >
+                    <button type="submit" disabled={occupe && enCours !== 'submit'}
+                      className={cn('flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[var(--couleur-primaire)] text-[14px] font-semibold text-white shadow-[var(--ombre-primaire)] transition-all hover:bg-[var(--couleur-primaire-sombre)] focus-visible:outline-2 focus-visible:outline-[var(--couleur-primaire)] focus-visible:outline-offset-2 active:scale-[0.99] disabled:opacity-60')}>
                       {enCours === 'submit' ? <><Loader2 className="size-4 animate-spin" /> Création en cours</> : 'Créer mon compte'}
                     </button>
                   </form>
@@ -330,7 +494,7 @@ export default function PageInscription() {
               )}
 
               {vue === 'confirmation' && (
-                <motion.div key="confirmation" {...transition}>
+                <motion.div key="confirmation" {...anim}>
                   <span className="grid size-14 place-items-center rounded-2xl border border-[var(--couleur-primaire)]/20 bg-[var(--couleur-primaire-doux)]" aria-hidden="true">
                     <svg viewBox="0 0 24 24" aria-hidden="true" className="size-7">
                       <motion.path d="M3 8.5 8.5 14l12-12.5" fill="none" stroke="var(--couleur-primaire)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.36, delay: 0.08, ease: [0.23, 1, 0.32, 1] }} />
@@ -340,7 +504,9 @@ export default function PageInscription() {
                     Vérifiez votre e-mail
                   </h1>
                   <p className="mt-2 text-[13.5px] leading-relaxed text-[var(--couleur-texte-secondaire)]">
-                    Un lien de confirmation a été envoyé à <span className="font-medium text-[var(--couleur-texte)]">{valeurs.email.trim()}</span>. Cliquez dessus pour activer votre compte.
+                    Un lien de confirmation a été envoyé à{' '}
+                    <span className="font-medium text-[var(--couleur-texte)]">{valeurs.email.trim()}</span>.
+                    Cliquez dessus pour activer votre compte.
                   </p>
                   <div className="mt-6 rounded-xl border border-[var(--couleur-bordure)] bg-[var(--couleur-fond-moyen)] p-4 text-[13px] text-[var(--couleur-texte-secondaire)]">
                     <p className="font-medium text-[var(--couleur-texte)]">Vous ne voyez pas l'e-mail ?</p>
@@ -350,7 +516,7 @@ export default function PageInscription() {
                       <li>Vérifiez que vous avez saisi la bonne adresse</li>
                     </ul>
                   </div>
-                  <a href="/connexion" className={cn('mt-6 flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[var(--couleur-bordure)] bg-[var(--couleur-fond)] text-[14px] font-medium text-[var(--couleur-texte)] shadow-[var(--ombre-sm)] transition-all hover:border-[var(--couleur-bordure-active)]')}>
+                  <a href="/connexion" className="mt-6 flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[var(--couleur-bordure)] bg-[var(--couleur-fond)] text-[14px] font-medium text-[var(--couleur-texte)] shadow-[var(--ombre-sm)] transition-all hover:border-[var(--couleur-bordure-active)]">
                     Retour à la connexion
                   </a>
                 </motion.div>
@@ -377,31 +543,22 @@ export default function PageInscription() {
 
 // ─── Sous-composants ─────────────────────────────────────────────────────────
 
-interface ChampInscriptionProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface ChampTexteProps extends React.InputHTMLAttributes<HTMLInputElement> {
   id: string;
   label: string;
   error?: string | null;
+  hint?: string;
   ref?: React.Ref<HTMLInputElement>;
 }
 
-function ChampInscription({ id, label, error, className, ref, ...props }: ChampInscriptionProps) {
+function ChampTexte({ id, label, error, hint, className, ref, ...props }: ChampTexteProps) {
   return (
     <div className="flex flex-col gap-1.5">
       <label htmlFor={id} className="text-[12.5px] font-medium text-[var(--couleur-texte)]">{label}</label>
-      <input
-        ref={ref}
-        id={id}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={error ? `${id}-erreur` : undefined}
-        className={cn(
-          'h-10 w-full rounded-xl border border-[var(--couleur-bordure)] bg-[var(--couleur-fond-moyen)] px-3.5 text-[14px] text-[var(--couleur-texte)] placeholder:text-[var(--couleur-texte-faible)] transition-[border-color,box-shadow]',
-          'focus:border-[var(--couleur-primaire)] focus:bg-[var(--couleur-fond)] focus:outline-none focus:shadow-[0_0_0_3px_rgb(255_107_0/0.15)]',
-          error && 'border-[var(--couleur-erreur)]',
-          className,
-        )}
-        {...props}
-      />
+      <input ref={ref} id={id} aria-invalid={error ? true : undefined} aria-describedby={error ? `${id}-erreur` : hint ? `${id}-indice` : undefined}
+        className={cn('h-10 w-full rounded-xl border border-[var(--couleur-bordure)] bg-[var(--couleur-fond-moyen)] px-3.5 text-[14px] text-[var(--couleur-texte)] placeholder:text-[var(--couleur-texte-faible)] transition-[border-color,box-shadow] focus:border-[var(--couleur-primaire)] focus:bg-[var(--couleur-fond)] focus:outline-none focus:shadow-[0_0_0_3px_rgb(255_107_0/0.15)]', error && 'border-[var(--couleur-erreur)]', className)} {...props} />
       {error && <p id={`${id}-erreur`} role="alert" className="text-[12px] text-[var(--couleur-erreur)]">{error}</p>}
+      {!error && hint && <p id={`${id}-indice`} className="text-[12px] text-[var(--couleur-texte-faible)]">{hint}</p>}
     </div>
   );
 }

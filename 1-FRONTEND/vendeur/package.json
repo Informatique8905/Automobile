@@ -18,6 +18,7 @@
     "@plateforme/types": "workspace:*",
     "@plateforme/ui": "workspace:*",
     "@plateforme/validation": "workspace:*",
+    "@supabase/supabase-js": "^2.50.0",
     "@tailwindcss/postcss": "^4.3.5",
     "gsap": "^3.15.1",
     "lucide-react": "^1.70.0",

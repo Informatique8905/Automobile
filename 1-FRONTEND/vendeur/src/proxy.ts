@@ -7,9 +7,9 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { rafraichirSession } from '@plateforme/supabase';
 
 /** Routes publiques (ne nécessitent pas de session) */
-const ROUTES_PUBLIQUES = ['/connexion', '/devenir-partenaire', '/auth/callback'];
+const ROUTES_PUBLIQUES = ['/connexion', '/auth/callback'];
 
-export async function middleware(requete: NextRequest) {
+export async function proxy(requete: NextRequest) {
   const { reponse, utilisateur } = await rafraichirSession(requete);
   const chemin = requete.nextUrl.pathname;
 

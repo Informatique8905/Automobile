@@ -10,7 +10,7 @@
     "db:types": "supabase gen types typescript --local > ../../1-FRONTEND/commun/types/src/database.types.ts",
     "db:push": "supabase db push",
     "db:nouvelle": "supabase migration new",
-    "test": "./scripts/test-db.sh"
+    "test": "bash ./scripts/ci-test.sh"
   },
   "devDependencies": { "supabase": "^2.30.0" }
 }

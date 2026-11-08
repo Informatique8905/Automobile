@@ -9,6 +9,8 @@
  * ─────────────────────────────────────────────────────────────────────────────
  */
 import { readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type { ContexteAgent } from './types.ts';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -47,7 +49,7 @@ export async function genererSyntheseSecurite(ctx: ContexteAgent): Promise<{ tit
   const brut = '```json\n' + JSON.stringify(chiffres, null, 2) + '\n```';
 
   try {
-    const systeme = readFileSync(new URL('../prompts/synthese-securite.v1.md', import.meta.url), 'utf8');
+    const systeme = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '../prompts/synthese-securite.v1.md'), 'utf8');
     const r = await ctx.llm.analyser({ modele: ctx.modeleParDefaut, systeme, message: brut, maxTokens: 700 });
     return { titre, texte: `${r.texte}\n\n---\nChiffres bruts :\n${brut}`, chiffres };
   } catch (e) {

@@ -11,6 +11,8 @@
  * ─────────────────────────────────────────────────────────────────────────────
  */
 import { readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { preFiltrer } from './pre-filtre.ts';
 import {
   combiner,
@@ -38,8 +40,8 @@ function lirePrompt(nom: string, version: string): string {
   const cle = `${nom}@${version}`;
   if (!cachePrompts.has(cle)) {
     // prompts/<nom>.<version>.md, ex. prompts/moderation-annonces.v1.md
-    const url = new URL(`../prompts/${nom}.${version}.md`, import.meta.url);
-    cachePrompts.set(cle, readFileSync(url, 'utf8'));
+    const cheminPrompt = resolve(dirname(fileURLToPath(import.meta.url)), `../prompts/${nom}.${version}.md`);
+    cachePrompts.set(cle, readFileSync(cheminPrompt, 'utf8'));
   }
   return cachePrompts.get(cle)!;
 }

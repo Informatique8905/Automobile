@@ -14,7 +14,9 @@
  */
 'use client';
 
-import { useId, useRef, useState, type FormEvent } from 'react';
+export const dynamic = 'force-dynamic';
+
+import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { clientNavigateur } from '@plateforme/supabase/navigateur';
@@ -24,6 +26,7 @@ import type { Provider } from '@supabase/supabase-js';
 // ─── Constantes ─────────────────────────────────────────────────────────────
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const SSO_ACTIF = process.env.NEXT_PUBLIC_SSO_ACTIVE === 'true';
 
 function messageFriendly(msg: string): string {
   if (msg.includes('Invalid login credentials')) return 'E-mail ou mot de passe incorrect.';
@@ -48,6 +51,11 @@ export default function PageConnexionVendeur() {
   const [erreur, setErreur] = useState<string | null>(null);
   const [enCours, setEnCours] = useState<null | 'submit' | Provider>(null);
   const [succes, setSucces] = useState(false);
+
+  const [erreurCallback, setErreurCallback] = useState(false);
+  useEffect(() => {
+    setErreurCallback(new URLSearchParams(window.location.search).get('erreur') === 'callback');
+  }, []);
 
   const emailRef = useRef<HTMLInputElement>(null);
   const mdpRef = useRef<HTMLInputElement>(null);
@@ -131,6 +139,19 @@ export default function PageConnexionVendeur() {
             <AnimatePresence mode="wait">
               {!succes ? (
                 <motion.div key="formulaire" {...transition}>
+                  {erreurCallback && (
+                    <div
+                      role="alert"
+                      className="mb-6 flex gap-3 rounded-xl border border-[var(--couleur-erreur)]/20 bg-[var(--couleur-erreur-fond)] px-3.5 py-3 text-[12.5px] leading-relaxed text-[var(--couleur-texte)]"
+                    >
+                      <svg viewBox="0 0 16 16" aria-hidden="true" className="mt-0.5 size-3.5 shrink-0 text-[var(--couleur-erreur)]">
+                        <path d="M8 1.75 15 14H1L8 1.75Z" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
+                        <path d="M8 6.25v3.5M8 11.6v.1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                      </svg>
+                      <p>La connexion a échoué. Veuillez réessayer.</p>
+                    </div>
+                  )}
+
                   <h1 className="text-[28px] font-semibold leading-tight tracking-[-0.03em] text-[var(--couleur-texte)] md:text-[32px]">
                     Espace partenaire
                   </h1>
@@ -138,22 +159,26 @@ export default function PageConnexionVendeur() {
                     Gérez votre flotte, vos réservations et vos versements.
                   </p>
 
-                  {/* SSO */}
-                  <div className="mt-7 grid grid-cols-2 gap-3">
-                    {(['google', 'apple'] as const).map((f) => (
-                      <button key={f} type="button" onClick={() => connecterSSO(f)} disabled={occupe && enCours !== f} aria-label={`Connexion ${f === 'google' ? 'Google' : 'Apple'}`}
-                        className={cn('flex h-11 items-center justify-center gap-2.5 rounded-xl border border-[var(--couleur-bordure)] bg-[var(--couleur-fond)] text-[13px] font-medium text-[var(--couleur-texte)] shadow-[var(--ombre-sm)] transition-all hover:border-[var(--couleur-bordure-active)] focus-visible:outline-2 focus-visible:outline-[var(--couleur-primaire)] focus-visible:outline-offset-2 disabled:opacity-50')}>
-                        {enCours === f ? <Loader2 className="size-4 animate-spin" /> : f === 'google' ? <IconGoogle /> : <IconApple />}
-                        <span>{f === 'google' ? 'Google' : 'Apple'}</span>
-                      </button>
-                    ))}
-                  </div>
+                  {/* SSO — masqués si NEXT_PUBLIC_SSO_ACTIVE !== 'true' */}
+                  {SSO_ACTIF && (
+                    <>
+                      <div className="mt-7 grid grid-cols-2 gap-3">
+                        {(['google', 'apple'] as const).map((f) => (
+                          <button key={f} type="button" onClick={() => connecterSSO(f)} disabled={occupe && enCours !== f} aria-label={`Connexion ${f === 'google' ? 'Google' : 'Apple'}`}
+                            className={cn('flex h-11 items-center justify-center gap-2.5 rounded-xl border border-[var(--couleur-bordure)] bg-[var(--couleur-fond)] text-[13px] font-medium text-[var(--couleur-texte)] shadow-[var(--ombre-sm)] transition-all hover:border-[var(--couleur-bordure-active)] focus-visible:outline-2 focus-visible:outline-[var(--couleur-primaire)] focus-visible:outline-offset-2 disabled:opacity-50')}>
+                            {enCours === f ? <Loader2 className="size-4 animate-spin" /> : f === 'google' ? <IconGoogle /> : <IconApple />}
+                            <span>{f === 'google' ? 'Google' : 'Apple'}</span>
+                          </button>
+                        ))}
+                      </div>
 
-                  <div className="my-6 flex items-center gap-3">
-                    <span className="h-px flex-1 bg-[var(--couleur-bordure)]" />
-                    <span className="text-[11px] font-medium uppercase tracking-widest text-[var(--couleur-texte-faible)]">ou par e-mail</span>
-                    <span className="h-px flex-1 bg-[var(--couleur-bordure)]" />
-                  </div>
+                      <div className="my-6 flex items-center gap-3">
+                        <span className="h-px flex-1 bg-[var(--couleur-bordure)]" />
+                        <span className="text-[11px] font-medium uppercase tracking-widest text-[var(--couleur-texte-faible)]">ou par e-mail</span>
+                        <span className="h-px flex-1 bg-[var(--couleur-bordure)]" />
+                      </div>
+                    </>
+                  )}
 
                   <form noValidate onSubmit={soumettre} className="flex flex-col gap-4">
                     {erreur && (

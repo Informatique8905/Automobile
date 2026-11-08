@@ -15,7 +15,13 @@
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
+import { clientServeur } from '@plateforme/supabase/serveur';
+import { redirect } from 'next/navigation';
+
 export default async function Page({ params }: { params: Promise<{ vehicule: string }> }) {
+  const supabase = await clientServeur();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect('/connexion');
   const { vehicule } = await params;
   return null; // À développer
 }

@@ -18,6 +18,8 @@
  */
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import {
   useCallback,
   useEffect,
@@ -49,6 +51,7 @@ type Erreurs = Partial<Record<keyof Champs, string>>;
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const LONGUEUR_CODE = 6;
+const SSO_ACTIF = process.env.NEXT_PUBLIC_SSO_ACTIVE === 'true';
 
 function valider(valeurs: Champs): Erreurs {
   const erreurs: Erreurs = {};
@@ -73,6 +76,11 @@ export default function PageConnexion() {
   const [afficherMdp, setAfficherMdp] = useState(false);
   const [verrou, setVerrou] = useState(false);
   const [motDePasseFocus, setMotDePasseFocus] = useState(false);
+
+  const [erreurCallback, setErreurCallback] = useState(false);
+  useEffect(() => {
+    setErreurCallback(new URLSearchParams(window.location.search).get('erreur') === 'callback');
+  }, []);
 
   const titreRef = useRef<HTMLHeadingElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
@@ -227,6 +235,19 @@ export default function PageConnexion() {
             <AnimatePresence mode="wait">
               {vue === 'formulaire' && (
                 <motion.div key="formulaire" {...transition}>
+                  {erreurCallback && (
+                    <div
+                      role="alert"
+                      className="mb-6 flex gap-3 rounded-xl border border-[var(--couleur-erreur)]/20 bg-[var(--couleur-erreur-fond)] px-3.5 py-3 text-[12.5px] leading-relaxed text-[var(--couleur-texte)]"
+                    >
+                      <svg viewBox="0 0 16 16" aria-hidden="true" className="mt-0.5 size-3.5 shrink-0 text-[var(--couleur-erreur)]">
+                        <path d="M8 1.75 15 14H1L8 1.75Z" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
+                        <path d="M8 6.25v3.5M8 11.6v.1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                      </svg>
+                      <p>La connexion a échoué. Veuillez réessayer.</p>
+                    </div>
+                  )}
+
                   <h1
                     id={titreId}
                     ref={titreRef}
@@ -239,41 +260,45 @@ export default function PageConnexion() {
                     Connectez-vous pour accéder à vos réservations et favoris.
                   </p>
 
-                  {/* Boutons SSO */}
-                  <div className="mt-7 grid grid-cols-2 gap-3">
-                    {(['google', 'apple'] as const).map((fournisseur) => (
-                      <button
-                        key={fournisseur}
-                        type="button"
-                        onClick={() => connecterSSO(fournisseur)}
-                        disabled={occupe && enCours !== fournisseur}
-                        aria-busy={enCours === fournisseur || undefined}
-                        aria-label={`Connexion avec ${fournisseur === 'google' ? 'Google' : 'Apple'}`}
-                        className={cn(
-                          'flex h-11 items-center justify-center gap-2.5 rounded-xl border border-[var(--couleur-bordure)] bg-[var(--couleur-fond)] text-[13px] font-medium text-[var(--couleur-texte)] shadow-[var(--ombre-sm)] transition-all',
-                          'hover:border-[var(--couleur-bordure-active)] hover:shadow-[var(--ombre)]',
-                          'focus-visible:outline-2 focus-visible:outline-[var(--couleur-primaire)] focus-visible:outline-offset-2',
-                          'disabled:cursor-not-allowed disabled:opacity-50',
-                        )}
-                      >
-                        {enCours === fournisseur ? (
-                          <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-                        ) : fournisseur === 'google' ? (
-                          <IconGoogle />
-                        ) : (
-                          <IconApple />
-                        )}
-                        <span>{fournisseur === 'google' ? 'Google' : 'Apple'}</span>
-                      </button>
-                    ))}
-                  </div>
+                  {/* Boutons SSO — masqués si NEXT_PUBLIC_SSO_ACTIVE !== 'true' */}
+                  {SSO_ACTIF && (
+                    <>
+                      <div className="mt-7 grid grid-cols-2 gap-3">
+                        {(['google', 'apple'] as const).map((fournisseur) => (
+                          <button
+                            key={fournisseur}
+                            type="button"
+                            onClick={() => connecterSSO(fournisseur)}
+                            disabled={occupe && enCours !== fournisseur}
+                            aria-busy={enCours === fournisseur || undefined}
+                            aria-label={`Connexion avec ${fournisseur === 'google' ? 'Google' : 'Apple'}`}
+                            className={cn(
+                              'flex h-11 items-center justify-center gap-2.5 rounded-xl border border-[var(--couleur-bordure)] bg-[var(--couleur-fond)] text-[13px] font-medium text-[var(--couleur-texte)] shadow-[var(--ombre-sm)] transition-all',
+                              'hover:border-[var(--couleur-bordure-active)] hover:shadow-[var(--ombre)]',
+                              'focus-visible:outline-2 focus-visible:outline-[var(--couleur-primaire)] focus-visible:outline-offset-2',
+                              'disabled:cursor-not-allowed disabled:opacity-50',
+                            )}
+                          >
+                            {enCours === fournisseur ? (
+                              <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                            ) : fournisseur === 'google' ? (
+                              <IconGoogle />
+                            ) : (
+                              <IconApple />
+                            )}
+                            <span>{fournisseur === 'google' ? 'Google' : 'Apple'}</span>
+                          </button>
+                        ))}
+                      </div>
 
-                  {/* Séparateur */}
-                  <div className="my-6 flex items-center gap-3" role="presentation">
-                    <span className="h-px flex-1 bg-[var(--couleur-bordure)]" />
-                    <span className="text-[11px] font-medium uppercase tracking-widest text-[var(--couleur-texte-faible)]">ou par e-mail</span>
-                    <span className="h-px flex-1 bg-[var(--couleur-bordure)]" />
-                  </div>
+                      {/* Séparateur */}
+                      <div className="my-6 flex items-center gap-3" role="presentation">
+                        <span className="h-px flex-1 bg-[var(--couleur-bordure)]" />
+                        <span className="text-[11px] font-medium uppercase tracking-widest text-[var(--couleur-texte-faible)]">ou par e-mail</span>
+                        <span className="h-px flex-1 bg-[var(--couleur-bordure)]" />
+                      </div>
+                    </>
+                  )}
 
                   {/* Formulaire */}
                   <form
@@ -726,7 +751,7 @@ function PanneauMarque() {
           { valeur: '2 500+', label: 'véhicules disponibles' },
           { valeur: '48 h', label: 'délai de livraison moyen' },
           { valeur: '98 %', label: 'clients satisfaits' },
-          { valeur: '10 villes', label: 'couvertes en Côte d'Ivoire' },
+          { valeur: '10 villes', label: "couvertes en Côte d'Ivoire" },
         ].map(({ valeur, label }) => (
           <div key={label} className="rounded-2xl bg-white/10 px-4 py-3 ring-1 ring-white/15">
             <p className="text-[22px] font-bold text-white">{valeur}</p>

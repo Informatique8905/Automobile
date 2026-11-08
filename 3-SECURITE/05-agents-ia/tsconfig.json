@@ -6,7 +6,8 @@
     "noEmit": false,
     "allowImportingTsExtensions": false,
     "lib": ["ES2023"],
-    "declaration": false,
+    "types": ["node"],
+    "declaration": true,
     "rewriteRelativeImportExtensions": true
   },
   "include": ["src"],
