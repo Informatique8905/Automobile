@@ -18,6 +18,19 @@
  */
 import { Injectable, Logger } from '@nestjs/common';
 import { env } from '../../../noyau/config/env';
+import type { FournisseurPaiement } from './fournisseur-paiement';
+import type {
+  DemandePaiement,
+  DemandeVersement,
+  MoyenPaiement,
+  ResultatVersement,
+  SessionPaiement,
+  StatutPaiement,
+  TransactionPaiement,
+} from './types-paiement';
+
+// Alias historiques : le reste du projet peut continuer d'importer ces noms.
+export type { MoyenPaiement as MoyenJeko, StatutPaiement as StatutJeko, TransactionPaiement as TransactionJeko } from './types-paiement';
 
 /** Chemins de l'API Jeko — À CONFIRMER avec la documentation Jeko */
 const CHEMINS = {
@@ -27,49 +40,24 @@ const CHEMINS = {
   versement: '/v1/transfers',
 } as const;
 
-export type MoyenJeko = 'card' | 'wave' | 'orange_money' | 'mtn_momo' | 'moov_money' | 'djamo' | 'pi_spi_qr';
-export type StatutJeko = 'en_attente' | 'reussi' | 'echoue' | 'annule' | 'expire';
-
-export interface DemandePaiement {
-  /** Notre référence (payments.reference, ex. PAY-7K3M9QXA) — renvoyée par Jeko dans le webhook */
-  referenceMarchand: string;
-  montant: number; // FCFA entiers
-  devise: 'XOF';
-  description: string;
-  urlRetour: string;
-  urlNotification: string;
-  client?: { nom?: string; telephone?: string; email?: string };
-}
-
-export interface SessionPaiement {
-  transactionId: string;
-  urlPaiement: string;
-}
-
-export interface TransactionJeko {
-  transactionId: string;
-  referenceMarchand: string;
-  statut: StatutJeko;
-  montant: number;
-  devise: string;
-  moyen: MoyenJeko | null;
-  brut: unknown;
-}
-
 @Injectable()
-export class JekoClient {
+export class JekoClient implements FournisseurPaiement {
   private readonly journal = new Logger('Jeko');
 
   private async appeler<T>(methode: 'GET' | 'POST', chemin: string, corps?: unknown, cleIdempotence?: string): Promise<T> {
+    const base = env.JEKO_API_URL;
+    const cleApi = env.JEKO_API_KEY;
+    if (!base || !cleApi) throw new Error('JEKO_NON_CONFIGURE');
+
     const controle = new AbortController();
     const minuterie = setTimeout(() => controle.abort(), 15_000);
     try {
-      const rep = await fetch(`${env.JEKO_API_URL}${chemin}`, {
+      const rep = await fetch(`${base}${chemin}`, {
         method: methode,
         signal: controle.signal,
         headers: {
           'content-type': 'application/json',
-          authorization: `Bearer ${env.JEKO_API_KEY}`, // À CONFIRMER : en-tête d'authentification Jeko
+          authorization: `Bearer ${cleApi}`, // À CONFIRMER : en-tête d'authentification Jeko
           ...(cleIdempotence ? { 'idempotency-key': cleIdempotence } : {}),
         },
         body: corps ? JSON.stringify(corps) : undefined,
@@ -100,7 +88,7 @@ export class JekoClient {
   }
 
   /** Source de vérité : on redemande toujours le statut à Jeko avant de valider. */
-  async obtenirTransaction(transactionId: string): Promise<TransactionJeko> {
+  async obtenirTransaction(transactionId: string): Promise<TransactionPaiement> {
     const r = await this.appeler<Record<string, any>>('GET', CHEMINS.statutPaiement(transactionId));
     return {
       transactionId: String(r.id ?? transactionId),
@@ -119,7 +107,7 @@ export class JekoClient {
     return { reference: String(r.id ?? r.reference) };
   }
 
-  async verser(d: { reference: string; montant: number; moyen: 'mobile_money' | 'bank_transfer'; destination: string; titulaire: string }) {
+  async verser(d: DemandeVersement): Promise<ResultatVersement> {
     const r = await this.appeler<Record<string, any>>('POST', CHEMINS.versement, {
       reference: d.reference, amount: d.montant, currency: 'XOF', method: d.moyen, destination: d.destination, holder_name: d.titulaire,
     }, `versement:${d.reference}`);
@@ -127,7 +115,7 @@ export class JekoClient {
   }
 
   // Correspondances À CONFIRMER avec les valeurs réelles renvoyées par Jeko
-  static convertirStatut(s: string): StatutJeko {
+  static convertirStatut(s: string): StatutPaiement {
     const v = s.toLowerCase();
     if (['success', 'succeeded', 'successful', 'paid', 'completed'].includes(v)) return 'reussi';
     if (['failed', 'failure', 'declined', 'error'].includes(v)) return 'echoue';
@@ -136,7 +124,7 @@ export class JekoClient {
     return 'en_attente';
   }
 
-  static convertirMoyen(m: string): MoyenJeko | null {
+  static convertirMoyen(m: string): MoyenPaiement | null {
     const v = m.toLowerCase().replace(/[\s-]/g, '_');
     if (v.includes('wave')) return 'wave';
     if (v.includes('orange')) return 'orange_money';

@@ -331,5 +331,67 @@ do $$ begin
   end;
 end $$;
 
+
+-- -----------------------------------------------------------------------------
+\echo '35. Migration 20261108000100 : consentements et adresse à l inscription'
+-- Vérifie que handle_new_user insère bien les consents (terms, privacy,
+-- marketing_email) ET stocke city_id / district_id dans profiles.
+:as_postgres
+-- Utilisateur avec marketing_consent = true et adresse
+insert into auth.users (id, email, raw_user_meta_data)
+values (
+  'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+  'test-consents@example.ci',
+  jsonb_build_object(
+    'first_name', 'Test',
+    'last_name',  'Consentements',
+    'city_id',     (select id from public.cities where slug = 'abidjan'),
+    'district_id', (select id from public.districts limit 1),
+    'marketing_consent', true
+  )
+);
+do $$ begin
+  -- Profil créé avec city_id et district_id
+  assert exists (
+    select 1 from public.profiles
+     where id = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
+       and city_id     = (select id from public.cities where slug = 'abidjan')
+       and district_id = (select id from public.districts limit 1)
+  ), 'city_id / district_id non stockés dans profiles';
+
+  -- Consentements obligatoires
+  assert (
+    select count(*) from public.consents
+     where user_id = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
+       and consent_type in ('terms', 'privacy')
+       and granted = true
+  ) = 2, 'consentements terms/privacy manquants';
+
+  -- Consentement marketing selon la valeur transmise
+  assert exists (
+    select 1 from public.consents
+     where user_id = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
+       and consent_type = 'marketing_email'
+       and granted = true
+  ), 'marketing_email devrait être true';
+end $$;
+
+-- Utilisateur sans marketing_consent (défaut : false)
+:as_postgres
+insert into auth.users (id, email, raw_user_meta_data)
+values (
+  'bbbbbbbb-cccc-dddd-eeee-ffffffffffff',
+  'test-no-marketing@example.ci',
+  jsonb_build_object('first_name', 'Sans', 'last_name', 'Marketing')
+);
+do $$ begin
+  assert exists (
+    select 1 from public.consents
+     where user_id = 'bbbbbbbb-cccc-dddd-eeee-ffffffffffff'
+       and consent_type = 'marketing_email'
+       and granted = false
+  ), 'marketing_email devrait être false par défaut';
+end $$;
+
 :as_postgres
 \echo '✔ Sécurité, Jeko et agents IA OK'

@@ -11,7 +11,7 @@
  * interne → 500 : Jeko renverra, et la réconciliation rattrapera de toute façon.
  * ═══════════════════════════════════════════════════════════════════
  */
-import { Controller, Headers, HttpCode, Logger, Post, Req, UnauthorizedException } from '@nestjs/common';
+import { Controller, Headers, HttpCode, Inject, Logger, Post, Req, UnauthorizedException } from '@nestjs/common';
 import type { RawBodyRequest } from '@nestjs/common';
 import type { Request } from 'express';
 import { createHash } from 'node:crypto';
@@ -19,7 +19,7 @@ import { verifierSignatureHmac } from '@plateforme/securite-applicative';
 import { env } from '../../../noyau/config/env';
 import { Public } from '../../../noyau/auth/decorateurs';
 import { BaseService } from '../../../noyau/base/supabase.service';
-import { JekoClient } from './jeko.client';
+import { FOURNISSEUR_PAIEMENT, type FournisseurPaiement } from './fournisseur-paiement';
 import { ApplicationPaiementService } from './application-paiement.service';
 
 // Noms d'en-têtes À CONFIRMER avec la documentation Jeko (fichier signalé : « Jeko-Signature »)
@@ -32,7 +32,7 @@ export class JekoWebhookController {
 
   constructor(
     private readonly base: BaseService,
-    private readonly jeko: JekoClient,
+    @Inject(FOURNISSEUR_PAIEMENT) private readonly paiement: FournisseurPaiement,
     private readonly application: ApplicationPaiementService,
   ) {}
 
@@ -47,10 +47,13 @@ export class JekoWebhookController {
     const brut = req.rawBody;
     if (!brut?.length) throw new UnauthorizedException('EMPTY_BODY');
 
+    // En simulation, le webhook de test est signé avec PAIEMENT_SIMULATION_SECRET ;
+    // en mode Jeko, avec le secret fourni par Jeko. Le chemin reste identique.
+    const secretWebhook = env.PAIEMENT_MODE === 'jeko' ? env.JEKO_WEBHOOK_SECRET : env.PAIEMENT_SIMULATION_SECRET;
     const verification = verifierSignatureHmac({
       corpsBrut: brut,
       signatureRecue: signature,
-      secret: env.JEKO_WEBHOOK_SECRET,
+      secret: secretWebhook ?? '',
       horodatage: horodatage || undefined,
       toleranceSecondes: 300,
     });
@@ -92,7 +95,7 @@ export class JekoWebhookController {
 
     const idTransaction = String(evenement.transaction_id ?? evenement.data?.id ?? evenement.id ?? '');
     try {
-      const tx = await this.jeko.obtenirTransaction(idTransaction); // source de vérité
+      const tx = await this.paiement.obtenirTransaction(idTransaction); // source de vérité
       const resultat = await this.application.appliquer(tx);
       await this.base.admin.from('payment_events').update({ processed_at: new Date().toISOString() }).eq('id', trace.id);
       return { recu: true, resultat };

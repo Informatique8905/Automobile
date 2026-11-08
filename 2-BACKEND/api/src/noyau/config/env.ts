@@ -25,10 +25,16 @@ const schema = z.object({
 
   CRON_SECRET: z.string().min(32, 'CRON_SECRET : 32 caractères minimum'),
 
-  JEKO_API_URL: z.url(),
-  JEKO_API_KEY: z.string().min(1),
-  JEKO_WEBHOOK_SECRET: z.string().min(16),
-  JEKO_RETURN_URL: z.url(),
+  // 'jeko' = API réelle · 'simulation' = fournisseur de test (page + webhook signé)
+  PAIEMENT_MODE: z.enum(['simulation', 'jeko']).default('simulation'),
+  // La simulation en production exige un drapeau explicite, retiré au branchement Jeko.
+  AUTORISER_PAIEMENT_SIMULATION: z.enum(['true', 'false']).default('false').transform((v) => v === 'true'),
+  PAIEMENT_SIMULATION_SECRET: z.string().min(16).optional(),
+
+  JEKO_API_URL: z.url().optional(),
+  JEKO_API_KEY: z.string().min(1).optional(),
+  JEKO_WEBHOOK_SECRET: z.string().min(16).optional(),
+  JEKO_RETURN_URL: z.url().optional(),
 
   FNE_API_URL: z.url().optional(),
   FNE_API_KEY: z.string().optional(),
@@ -63,10 +69,30 @@ if (!resultat.success) {
   process.exit(1);
 }
 
-if (resultat.data.NODE_ENV === 'production' && resultat.data.LLM_PROVIDER === 'anthropic' && !resultat.data.LLM_API_KEY) {
+const config = resultat.data;
+const manquants: string[] = [];
+
+if (config.PAIEMENT_MODE === 'jeko') {
+  for (const cle of ['JEKO_API_URL', 'JEKO_API_KEY', 'JEKO_WEBHOOK_SECRET', 'JEKO_RETURN_URL'] as const) {
+    if (!config[cle]) manquants.push(cle);
+  }
+}
+if (config.PAIEMENT_MODE === 'simulation' && !config.PAIEMENT_SIMULATION_SECRET) {
+  manquants.push('PAIEMENT_SIMULATION_SECRET');
+}
+if (config.NODE_ENV === 'production' && config.PAIEMENT_MODE === 'simulation' && !config.AUTORISER_PAIEMENT_SIMULATION) {
+  console.error('PAIEMENT_MODE=simulation interdit en production sans AUTORISER_PAIEMENT_SIMULATION=true (à retirer au branchement Jeko)');
+  process.exit(1);
+}
+if (manquants.length) {
+  console.error(`Configuration invalide : variables obligatoires manquantes selon PAIEMENT_MODE=${config.PAIEMENT_MODE} : ${manquants.join(', ')}`);
+  process.exit(1);
+}
+
+if (config.NODE_ENV === 'production' && config.LLM_PROVIDER === 'anthropic' && !config.LLM_API_KEY) {
   console.error('LLM_API_KEY obligatoire quand LLM_PROVIDER=anthropic');
   process.exit(1);
 }
 
-export const env = resultat.data;
+export const env = config;
 export type Env = typeof env;

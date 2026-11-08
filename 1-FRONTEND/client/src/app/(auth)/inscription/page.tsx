@@ -35,6 +35,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { clientNavigateur } from '@plateforme/supabase/navigateur';
 import { cn } from '@plateforme/ui/utils';
+import { transitionEntree, transitionSucces, useMouvementReduit } from '@plateforme/ui/mouvement';
 import type { Provider } from '@supabase/supabase-js';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -105,6 +106,7 @@ function messageFriendly(msg: string): string {
 
 export default function PageInscription() {
   const uid = useId();
+  const mouvementReduit = useMouvementReduit();
   const supabase = clientNavigateur();
 
   const [vue, setVue] = useState<Vue>('formulaire');
@@ -256,12 +258,7 @@ export default function PageInscription() {
   };
 
   const titreId = `${uid}-titre`;
-  const anim = {
-    initial: { opacity: 0, y: 6, filter: 'blur(3px)' },
-    animate: { opacity: 1, y: 0, filter: 'blur(0px)' },
-    exit: { opacity: 0, y: -6, filter: 'blur(3px)' },
-    transition: { duration: 0.22, ease: [0.23, 1, 0.32, 1] as const },
-  };
+  const anim = transitionEntree(mouvementReduit);
 
   return (
     <div className="grid min-h-dvh lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
@@ -497,7 +494,7 @@ export default function PageInscription() {
                 <motion.div key="confirmation" {...anim}>
                   <span className="grid size-14 place-items-center rounded-2xl border border-[var(--couleur-primaire)]/20 bg-[var(--couleur-primaire-doux)]" aria-hidden="true">
                     <svg viewBox="0 0 24 24" aria-hidden="true" className="size-7">
-                      <motion.path d="M3 8.5 8.5 14l12-12.5" fill="none" stroke="var(--couleur-primaire)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.36, delay: 0.08, ease: [0.23, 1, 0.32, 1] }} />
+                      <motion.path d="M3 8.5 8.5 14l12-12.5" fill="none" stroke="var(--couleur-primaire)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={transitionSucces(mouvementReduit)} />
                     </svg>
                   </span>
                   <h1 id={titreId} ref={titreRef} tabIndex={-1} className="mt-6 text-[28px] font-semibold leading-tight tracking-[-0.03em] text-[var(--couleur-texte)] outline-none">

@@ -11,10 +11,15 @@
     "./jetons.css": "./src/jetons.css",
     "./utils": "./src/lib/utils.ts",
     "./lib": "./src/lib/utils.ts",
+    "./lib/mouvement": "./src/lib/mouvement.ts",
+    "./mouvement": "./src/lib/mouvement.ts",
     "./hooks": "./src/hooks/index.ts"
   },
   "peerDependencies": {
     "react": ">=19"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",

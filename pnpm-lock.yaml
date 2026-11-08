@@ -69,6 +69,9 @@ importers:
       '@types/react':
         specifier: ^19.0.0
         version: 19.3.0
+      eslint:
+        specifier: ^9.0.0
+        version: 9.39.5(jiti@2.7.0)
       typescript:
         specifier: ^5.9.0
         version: 5.9.3
@@ -130,6 +133,9 @@ importers:
       '@types/react':
         specifier: ^19.0.0
         version: 19.3.0
+      eslint:
+        specifier: ^9.0.0
+        version: 9.39.5(jiti@2.7.0)
       typescript:
         specifier: ^5.9.0
         version: 5.9.3
@@ -169,6 +175,10 @@ importers:
       tailwind-merge:
         specifier: ^3.7.0
         version: 3.7.0
+    devDependencies:
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.3.0
 
   1-FRONTEND/commun/validation:
     dependencies:
@@ -233,6 +243,9 @@ importers:
       '@types/react':
         specifier: ^19.0.0
         version: 19.3.0
+      eslint:
+        specifier: ^9.0.0
+        version: 9.39.5(jiti@2.7.0)
       typescript:
         specifier: ^5.9.0
         version: 5.9.3
