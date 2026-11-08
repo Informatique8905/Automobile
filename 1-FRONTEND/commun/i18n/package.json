@@ -1,6 +1,9 @@
 {
-  "name": "@auto/i18n",
+  "name": "@plateforme/i18n",
+  "version": "1.0.0",
   "private": true,
+  "description": "Textes de l'interface et traduction des codes d'erreur de la base (français, anglais en P2)",
   "type": "module",
-  "exports": { ".": "./src/index.ts" }
+  "main": "./src/index.ts",
+  "types": "./src/index.ts"
 }

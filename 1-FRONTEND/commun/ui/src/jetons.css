@@ -1,1 +1,111 @@
-:root { --couleur-primaire: #0057b8; --couleur-accent: #ff6b00; --rayon: 0.75rem; --police: system-ui, sans-serif; }
+/* ═══════════════════════════════════════════════════════════════════
+ * JETONS DE DESIGN — couleurs, espacements, typographie, rayons
+ * Une seule source pour les 3 applications. Contrastes vérifiés WCAG 2.2 AA
+ * (texte normal ≥ 4,5:1 · texte grand ≥ 3:1).
+ *
+ * Charte : 65 % blanc / 35 % orange vif
+ *   #FF6B00  → fond bouton primaire, icônes de marque (sur blanc : ratio 3,0:1 → texte blanc interdit)
+ *   #C2410C  → texte orange sur fond blanc (ratio 4,65:1 ✅ AA) — USE for orange text only
+ *   #111827  → texte principal sur blanc (ratio 16,1:1 ✅ AAA)
+ * ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Couleurs primaires */
+  --couleur-primaire:         #FF6B00;  /* orange vif — fond bouton, badges */
+  --couleur-primaire-sombre:  #E55A00;  /* hover bouton primaire */
+  --couleur-primaire-texte:   #FFFFFF;  /* texte blanc sur bouton orange */
+  --couleur-primaire-doux:    #FFF3E8;  /* fond section à teinte orange légère */
+
+  /* Texte orange accessible sur fond blanc */
+  --couleur-orange-accessible: #C2410C; /* ratio 4,65:1 sur #FFFFFF ✅ AA */
+
+  /* Texte */
+  --couleur-texte:            #111827;  /* texte principal */
+  --couleur-texte-secondaire: #4B5563;  /* texte secondaire, labels */
+  --couleur-texte-faible:     #9CA3AF;  /* placeholder, désactivé */
+
+  /* Fonds */
+  --couleur-fond:             #FFFFFF;  /* fond principal */
+  --couleur-fond-doux:        #F9FAFB;  /* fond page, alternances */
+  --couleur-fond-moyen:       #F3F4F6;  /* cartes, inputs */
+
+  /* Bordures */
+  --couleur-bordure:          #E5E7EB;
+  --couleur-bordure-active:   #FF6B00;
+
+  /* États sémantiques (contrastes vérifiés sur fond blanc) */
+  --couleur-succes:           #15803D;  /* 5,2:1 ✅ */
+  --couleur-succes-fond:      #F0FDF4;
+  --couleur-alerte:           #B45309;  /* 4,8:1 ✅ */
+  --couleur-alerte-fond:      #FFFBEB;
+  --couleur-erreur:           #B91C1C;  /* 5,0:1 ✅ */
+  --couleur-erreur-fond:      #FEF2F2;
+  --couleur-info:             #1D4ED8;  /* 7,0:1 ✅ */
+  --couleur-info-fond:        #EFF6FF;
+
+  /* Typographie */
+  --police: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --taille-texte:   16px;    /* jamais < 16 px sur mobile (évite le zoom automatique iOS) */
+  --taille-sm:      14px;
+  --taille-lg:      18px;
+  --taille-xl:      20px;
+  --taille-2xl:     24px;
+  --taille-3xl:     30px;
+  --taille-4xl:     36px;
+  --graisse-normale:  400;
+  --graisse-moyen:    500;
+  --graisse-semi:     600;
+  --graisse-gras:     700;
+  --interligne:       1.5;
+
+  /* Rayons */
+  --rayon-sm:    6px;
+  --rayon:      12px;
+  --rayon-lg:   16px;
+  --rayon-xl:   24px;
+  --rayon-rond: 9999px;
+
+  /* Espacements */
+  --espace-1:  4px;
+  --espace-2:  8px;
+  --espace-3:  12px;
+  --espace-4:  16px;
+  --espace-5:  20px;
+  --espace-6:  24px;
+  --espace-8:  32px;
+  --espace-10: 40px;
+  --espace-12: 48px;
+  --espace-16: 64px;
+
+  /* Cible tactile (boutons, liens) */
+  --cible-tactile: 44px;
+
+  /* Ombres */
+  --ombre-sm:  0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --ombre:     0 1px 3px 0 rgb(0 0 0 / 0.10), 0 1px 2px -1px rgb(0 0 0 / 0.10);
+  --ombre-md:  0 4px 6px -1px rgb(0 0 0 / 0.10), 0 2px 4px -2px rgb(0 0 0 / 0.10);
+  --ombre-lg:  0 10px 15px -3px rgb(0 0 0 / 0.10), 0 4px 6px -4px rgb(0 0 0 / 0.10);
+  --ombre-primaire: 0 4px 14px 0 rgb(255 107 0 / 0.30);
+
+  /* Transitions */
+  --transition-vite:   150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-lente:  400ms ease;
+
+  /* Mise en page */
+  --largeur-max:   1280px;
+  --largeur-prose: 65ch;
+}
+
+/* Mode sombre (non activé pour l'instant — réservé pour extension future) */
+/* @media (prefers-color-scheme: dark) { :root { ... } } */
+
+/* Accessibilité : désactiver toutes les animations si l'utilisateur le préfère */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

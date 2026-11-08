@@ -1,6 +1,14 @@
-import { Module } from "@nestjs/common";
-import { SanteController } from "./sante/sante.controller.js";
-import { SupabaseService } from "./base/supabase.service.js";
+/**
+ * NOYAU — fourni à toute l'API : accès à la base, gardes, santé.
+ */
+import { Global, Module } from '@nestjs/common';
+import { BaseService } from './base/supabase.service';
+import { SanteController } from './sante/sante.controller';
 
-@Module({ controllers: [SanteController], providers: [SupabaseService], exports: [SupabaseService] })
+@Global()
+@Module({
+  controllers: [SanteController],
+  providers: [BaseService],
+  exports: [BaseService],
+})
 export class NoyauModule {}

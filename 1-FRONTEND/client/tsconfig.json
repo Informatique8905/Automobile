@@ -1,26 +1,8 @@
 {
-  "extends": "@auto/config/tsconfig.base.json",
+  "extends": "../commun/config/tsconfig.base.json",
   "compilerOptions": {
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
-    "paths": {
-      "@/*": [
-        "./*"
-      ]
-    },
-    "allowJs": true,
-    "incremental": true
+    "plugins": [{ "name": "next" }],
+    "paths": { "@/*": ["./src/*"] }
   },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "include": ["next-env.d.ts", "src/**/*.ts", "src/**/*.tsx", ".next/types/**/*.ts"]
 }

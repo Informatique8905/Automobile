@@ -1,2 +1,15 @@
-import type { ReactNode } from "react";
-export function Toast({ children }: { children: ReactNode }) { return <output>{children}</output>; }
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * COMPOSANT · Message temporaire (succès, erreur)
+ * Application : commun (les 3 applications)
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
+
+export interface ToastProps {
+  // À définir
+}
+
+export function Toast(_props: ToastProps) {
+  return null; // À développer
+}

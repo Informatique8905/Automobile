@@ -1,8 +1,26 @@
-import { Module } from "@nestjs/common";
-import { AgentsIaController } from "./agents-ia.controller.js";
-import { DocumentsController } from "./documents.controller.js";
-import { IncidentsController } from "./incidents.controller.js";
-import { MesDonneesController } from "./mes-donnees.controller.js";
-import { RemboursementsController } from "./remboursements.controller.js";
-import { VersementsController } from "./versements.controller.js";
-@Module({ controllers: [AgentsIaController, DocumentsController, IncidentsController, MesDonneesController, RemboursementsController, VersementsController] }) export class AdministrateurModule {}
+/**
+ * MODULE ADMINISTRATEUR — routes /administrateur/...
+ * Rôles de l'équipe uniquement, session « aal2 » (double authentification) exigée
+ * par RolesGuard ET par la base.
+ */
+import { Module } from '@nestjs/common';
+import { CommunModule } from '../commun/commun.module';
+import { RemboursementsAdminController } from './remboursements.controller';
+import { VersementsAdminController } from './versements.controller';
+import { DocumentsAdminController } from './documents.controller';
+import { AgentsIaAdminController } from './agents-ia.controller';
+import { MesDonneesAdminController } from './mes-donnees.controller';
+import { IncidentsAdminController } from './incidents.controller';
+
+@Module({
+  imports: [CommunModule],
+  controllers: [
+    RemboursementsAdminController,
+    VersementsAdminController,
+    DocumentsAdminController,
+    AgentsIaAdminController,
+    MesDonneesAdminController,
+    IncidentsAdminController,
+  ],
+})
+export class AdministrateurModule {}

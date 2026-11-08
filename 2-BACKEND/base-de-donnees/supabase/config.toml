@@ -1,0 +1,249 @@
+# =============================================================================
+# Configuration Supabase CLI — Plateforme de location et vente de véhicules
+#
+# Ce fichier règle la pile LOCALE lancée par `npx supabase start` (Docker).
+# Il ne modifie PAS le projet en ligne, sauf si vous lancez `supabase config push`
+# (déconseillé au début : voir le guide, section « Déployer »).
+#
+# Les secrets ne sont jamais écrits ici : ils sont lus avec env(NOM_VARIABLE)
+# depuis supabase/.env (copie de supabase/.env.example, jamais commité).
+#
+# Référence complète : https://supabase.com/docs/guides/local-development/cli/config
+# =============================================================================
+
+# Identifiant de la pile locale (nom des conteneurs Docker). Sans rapport avec
+# l'identifiant (project ref) du projet en ligne.
+project_id = "location-vente-vehicules"
+
+# -----------------------------------------------------------------------------
+# API (PostgREST)
+# -----------------------------------------------------------------------------
+[api]
+enabled = true
+port = 54321
+# Schémas exposés à l'API. Le schéma « private » (fonctions internes de sécurité)
+# n'est volontairement PAS exposé : il ne doit jamais apparaître ici.
+schemas = ["public", "graphql_public"]
+# Schémas ajoutés au search_path de chaque requête (extensions : citext, pg_trgm…)
+extra_search_path = ["public", "extensions"]
+# Nombre maximum de lignes renvoyées par requête (protège contre les extractions massives)
+max_rows = 1000
+
+[api.tls]
+enabled = false
+
+# -----------------------------------------------------------------------------
+# Base de données
+# -----------------------------------------------------------------------------
+[db]
+port = 54322
+shadow_port = 54320
+# Doit être identique à la version du projet en ligne.
+# Vérifier dans l'éditeur SQL du projet : SHOW server_version;
+# Les nouveaux projets Supabase sont en Postgres 17 ; mettre 15 si le vôtre est en 15.
+major_version = 17
+
+[db.pooler]
+enabled = false
+port = 54329
+pool_mode = "transaction"
+default_pool_size = 20
+max_client_conn = 100
+
+[db.seed]
+# Exécute seed.sql après les migrations, à chaque `supabase db reset`.
+# seed.sql est relançable sans risque : il n'écrase jamais une donnée existante.
+enabled = true
+sql_paths = ["./seed.sql"]
+
+# -----------------------------------------------------------------------------
+# Temps réel (messagerie contextuelle, statut de flotte, notifications)
+# -----------------------------------------------------------------------------
+[realtime]
+enabled = true
+
+# -----------------------------------------------------------------------------
+# Studio : interface d'administration locale → http://127.0.0.1:54323
+# -----------------------------------------------------------------------------
+[studio]
+enabled = true
+port = 54323
+api_url = "http://127.0.0.1"
+
+# -----------------------------------------------------------------------------
+# Boîte mail de test : tous les emails envoyés en local arrivent ici
+# → http://127.0.0.1:54324 (aucun email n'est réellement envoyé)
+# -----------------------------------------------------------------------------
+[local_smtp]
+enabled = true
+port = 54324
+
+# -----------------------------------------------------------------------------
+# Stockage (photos, documents). Les 11 buckets et leurs règles d'accès sont créés
+# par la migration 1500 : ne pas les redéclarer ici.
+# -----------------------------------------------------------------------------
+[storage]
+enabled = true
+# Taille maximale absolue d'un fichier ; chaque bucket a sa propre limite (5 à 15 Mo).
+file_size_limit = "50MiB"
+
+# -----------------------------------------------------------------------------
+# Authentification
+# -----------------------------------------------------------------------------
+[auth]
+enabled = true
+# Adresse de l'application Next.js en local
+site_url = "http://localhost:3000"
+# Adresses autorisées après connexion (retour Google/Apple, lien magique, mot de passe oublié)
+additional_redirect_urls = [
+  "http://localhost:3000/**",
+  "http://127.0.0.1:3000/**",
+]
+# Durée de validité d'une session avant renouvellement automatique (1 h)
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+refresh_token_reuse_interval = 10
+enable_signup = true
+enable_anonymous_sign_ins = false
+enable_manual_linking = false
+# Mots de passe : 8 caractères minimum, minuscules + majuscules + chiffres
+minimum_password_length = 8
+password_requirements = "lower_upper_letters_digits"
+
+[auth.rate_limit]
+# Emails par heure (ne s'applique qu'avec un vrai serveur SMTP)
+email_sent = 2
+# SMS par heure
+sms_sent = 30
+# Connexions anonymes par heure et par IP
+anonymous_users = 30
+# Renouvellements de session par tranche de 5 min et par IP
+token_refresh = 150
+# Connexions / inscriptions par tranche de 5 min et par IP (anti-force brute)
+sign_in_sign_ups = 30
+# Vérifications de code / lien magique par tranche de 5 min et par IP
+token_verifications = 30
+
+# Captcha Cloudflare Turnstile sur inscription et connexion (à activer en ligne).
+# [auth.captcha]
+# enabled = true
+# provider = "turnstile"
+# secret = "env(SUPABASE_AUTH_CAPTCHA_SECRET)"
+
+[auth.email]
+enable_signup = true
+# Changement d'email confirmé sur l'ancienne ET la nouvelle adresse
+double_confirm_changes = true
+# Confirmation obligatoire de l'email à l'inscription.
+# En local, cliquez le lien reçu dans la boîte de test (http://127.0.0.1:54324).
+enable_confirmations = true
+# Mot de passe actuel exigé pour en définir un nouveau
+secure_password_change = true
+# Délai minimum entre deux envois à la même adresse
+max_frequency = "60s"
+otp_length = 6
+otp_expiry = 3600
+
+# Emails en français (fichiers dans supabase/templates/)
+[auth.email.template.confirmation]
+subject = "Confirmez votre adresse email"
+content_path = "./supabase/templates/confirmation.html"
+
+[auth.email.template.recovery]
+subject = "Réinitialisez votre mot de passe"
+content_path = "./supabase/templates/recovery.html"
+
+[auth.email.template.magic_link]
+subject = "Votre lien de connexion"
+content_path = "./supabase/templates/magic_link.html"
+
+[auth.email.template.email_change]
+subject = "Confirmez votre nouvelle adresse email"
+content_path = "./supabase/templates/email_change.html"
+
+# Serveur d'envoi réel (production). Exemple avec Resend :
+# [auth.email.smtp]
+# enabled = true
+# host = "smtp.resend.com"
+# port = 465
+# user = "resend"
+# pass = "env(SUPABASE_AUTH_SMTP_PASSWORD)"
+# admin_email = "no-reply@votre-domaine.ci"
+# sender_name = "Location & Vente de Véhicules"
+
+[auth.sms]
+# Inscription par SMS désactivée : chaque SMS est facturé (à activer plus tard).
+enable_signup = false
+enable_confirmations = false
+template = "Votre code de vérification : {{ .Code }}"
+max_frequency = "5s"
+
+# Numéros de test : le code est toujours le même, aucun SMS n'est envoyé (local uniquement)
+# [auth.sms.test_otp]
+# 2250701020304 = "123456"
+
+[auth.sms.twilio]
+enabled = false
+account_sid = ""
+message_service_sid = ""
+auth_token = "env(SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN)"
+
+# -----------------------------------------------------------------------------
+# Double authentification (exigée pour les partenaires et l'équipe interne)
+# -----------------------------------------------------------------------------
+[auth.mfa]
+max_enrolled_factors = 10
+
+# Application d'authentification (Google Authenticator, Authy…)
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
+
+# Code par SMS (payant) : désactivé
+[auth.mfa.phone]
+enroll_enabled = false
+verify_enabled = false
+otp_length = 6
+template = "Votre code : {{ .Code }}"
+max_frequency = "5s"
+
+# -----------------------------------------------------------------------------
+# Connexion via Google et Apple (carnet : « Système de connexion via Google, iOS »)
+# Mettre enabled = true après avoir rempli les clés dans supabase/.env.
+# URL de retour à déclarer chez Google / Apple pour le local :
+#   http://127.0.0.1:54321/auth/v1/callback
+# -----------------------------------------------------------------------------
+[auth.external.google]
+enabled = false
+client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
+redirect_uri = ""
+url = ""
+# Nécessaire pour la connexion Google en local
+skip_nonce_check = true
+
+[auth.external.apple]
+enabled = false
+client_id = "env(SUPABASE_AUTH_EXTERNAL_APPLE_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_EXTERNAL_APPLE_SECRET)"
+redirect_uri = ""
+url = ""
+skip_nonce_check = false
+
+# -----------------------------------------------------------------------------
+# Edge Functions : non utilisées (le serveur est Next.js sur Vercel).
+# Désactivées pour alléger Docker ; passer à true si besoin.
+# -----------------------------------------------------------------------------
+[edge_runtime]
+enabled = false
+policy = "oneshot"
+inspector_port = 8083
+
+# -----------------------------------------------------------------------------
+# Journaux (Logs Explorer de Studio). Désactivé : service lourd, et sous Windows
+# il exige d'exposer le démon Docker. Passer à true si vous en avez besoin.
+# -----------------------------------------------------------------------------
+[analytics]
+enabled = false
+port = 54327
+backend = "postgres"

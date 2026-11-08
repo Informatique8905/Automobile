@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Confirmez votre adresse email</title></head>
+<body style="margin:0;padding:0;background:#f4f5f7;font-family:Arial,Helvetica,sans-serif;color:#1f2933;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5f7;padding:24px 12px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:12px;padding:32px 28px;">
+        <tr><td style="font-size:18px;font-weight:bold;color:#0b6e4f;padding-bottom:24px;">Location &amp; Vente de Véhicules</td></tr>
+        <tr><td style="font-size:22px;font-weight:bold;padding-bottom:12px;">Confirmez votre adresse email</td></tr>
+        <tr><td style="font-size:16px;line-height:1.6;padding-bottom:24px;">Bienvenue ! Il ne reste qu'une étape pour activer votre compte et réserver ou vendre un véhicule.</td></tr>
+        <tr><td style="padding-bottom:24px;">
+          <a href="{{ .ConfirmationURL }}" style="display:inline-block;background:#0b6e4f;color:#ffffff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 24px;border-radius:8px;">Confirmer mon email</a>
+        </td></tr>
+        <tr><td style="font-size:14px;line-height:1.6;color:#52606d;padding-bottom:16px;">Ou saisissez ce code dans l'application : <strong>{{ .Token }}</strong></td></tr>
+        <tr><td style="font-size:14px;line-height:1.6;color:#52606d;padding-bottom:24px;">Vous n'êtes pas à l'origine de cette inscription ? Ignorez simplement cet email.</td></tr>
+        <tr><td style="font-size:12px;line-height:1.5;color:#9aa5b1;border-top:1px solid #e4e7eb;padding-top:16px;">
+          Nous ne vous demanderons jamais votre mot de passe ni un paiement par email, SMS ou WhatsApp.<br>
+          Si le bouton ne fonctionne pas, copiez ce lien dans votre navigateur :<br>
+          <span style="word-break:break-all;">{{ .ConfirmationURL }}</span>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>

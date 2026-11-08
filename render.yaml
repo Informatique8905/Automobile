@@ -1,0 +1,72 @@
+# =============================================================================
+# Render Blueprint — crée le service de l'API (2-BACKEND/api)
+# Render → New → Blueprint → choisir ce dépôt
+# =============================================================================
+services:
+  - type: web
+    name: plateforme-api
+    runtime: node
+    plan: free            # passer à "starter" avant le premier paiement réel (plus de mise en veille)
+    region: frankfurt     # la plus proche de la région Supabase Europe
+    branch: main
+    rootDir: .
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter api build
+    startCommand: pnpm --filter api start
+    healthCheckPath: /sante
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "22"
+      # Les secrets se saisissent dans le tableau de bord (sync: false = jamais dans le dépôt)
+      - key: ALLOWED_ORIGINS
+        sync: false
+      - key: API_PUBLIC_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_PUBLISHABLE_KEY
+        sync: false
+      - key: SUPABASE_SECRET_KEY
+        sync: false
+      - key: SUPABASE_JWKS_URL
+        sync: false
+      - key: CRON_SECRET          # généré par Render : le recopier dans le coffre Supabase (cron_render.sql)
+        generateValue: true
+      - key: JEKO_API_URL
+        sync: false
+      - key: JEKO_API_KEY
+        sync: false
+      - key: JEKO_WEBHOOK_SECRET
+        sync: false
+      - key: JEKO_RETURN_URL
+        sync: false
+      - key: FNE_API_URL
+        sync: false
+      - key: FNE_API_KEY
+        sync: false
+      - key: KYC_PROVIDER
+        sync: false
+      - key: KYC_API_KEY
+        sync: false
+      - key: LLM_PROVIDER
+        sync: false
+      - key: LLM_API_KEY
+        sync: false
+      - key: LLM_DEFAULT_MODEL
+        sync: false
+      - key: LLM_PRIX_ENTREE_USD_PAR_MTOK
+        sync: false
+      - key: LLM_PRIX_SORTIE_USD_PAR_MTOK
+        sync: false
+      - key: EMAIL_API_KEY
+        sync: false
+      - key: SMS_API_KEY
+        sync: false
+      - key: WHATSAPP_TOKEN
+        sync: false
+      - key: PAYOUT_ENCRYPTION_KEY
+        sync: false
+      - key: SENTRY_DSN
+        sync: false

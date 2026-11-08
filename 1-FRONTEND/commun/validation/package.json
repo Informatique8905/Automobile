@@ -1,7 +1,10 @@
 {
-  "name": "@auto/validation",
+  "name": "@plateforme/validation",
+  "version": "1.0.0",
   "private": true,
+  "description": "Schémas de validation partagés (frontend ET API) : téléphone CI, montants FCFA, dates, filtres",
   "type": "module",
-  "exports": { ".": "./src/index.ts" },
-  "dependencies": { "zod": "^4.1.11" }
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "dependencies": { "zod": "^4.0.0" }
 }

@@ -1,0 +1,113 @@
+name: CI
+
+on:
+  push:
+    branches: [main, partie-1-socle]
+  pull_request:
+    branches: [main]
+
+env:
+  NODE_VERSION: '22'
+  PNPM_VERSION: '10'
+
+jobs:
+  # ─────────────────────────────────────────────────
+  # Build, lint, typecheck (toutes les apps)
+  # ─────────────────────────────────────────────────
+  qualite:
+    name: Qualité du code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Installer les dépendances
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+  # ─────────────────────────────────────────────────
+  # Tests sécurité / agents IA (Node 22 natif)
+  # ─────────────────────────────────────────────────
+  tests-unitaires:
+    name: Tests unitaires
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Installer les dépendances
+        run: pnpm install --frozen-lockfile
+
+      - name: Tests (securite-applicative, agents-ia, api)
+        run: pnpm test --filter=@plateforme/securite-applicative --filter=@plateforme/agents-ia --filter=api
+
+  # ─────────────────────────────────────────────────
+  # Tests SQL — base de données (Supabase local)
+  # Le job exécute TOUJOURS les tests : psql est
+  # disponible grâce à postgresql-client + supabase start.
+  # Le script ci-test.sh passe silencieusement en local
+  # quand psql est absent, mais jamais ici.
+  # ─────────────────────────────────────────────────
+  base-de-donnees:
+    name: Tests SQL
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: 2-BACKEND/base-de-donnees
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Installer postgresql-client
+        run: sudo apt-get update -q && sudo apt-get install -y postgresql-client
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Démarrer Supabase local
+        run: supabase start
+
+      - name: Vérifier que psql est accessible
+        run: psql --version
+
+      - name: Tests SQL (migrations + seed + scénarios)
+        run: bash scripts/ci-test.sh
+        env:
+          # Supabase local expose PostgreSQL sur le port 54322
+          PGHOST: localhost
+          PGPORT: 54322
+          PGUSER: postgres
+          PGPASSWORD: postgres
