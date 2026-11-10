@@ -1,0 +1,70 @@
+name: Sécurité
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Tous les lundis à 7 h UTC
+    - cron: '0 7 * * 1'
+
+jobs:
+  # ─────────────────────────────────────────────────
+  # Recherche de secrets dans le dépôt (gitleaks)
+  # ─────────────────────────────────────────────────
+  secrets:
+    name: Recherche de secrets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ─────────────────────────────────────────────────
+  # Aucune clé secrète dans le frontend
+  # ─────────────────────────────────────────────────
+  frontend-cles:
+    name: Pas de secret dans le frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Vérifier l'absence de clé secrète Supabase dans 1-FRONTEND
+        run: |
+          if grep -r "sb_secret_\|service_role\|SUPABASE_SECRET" 1-FRONTEND/ --include="*.ts" --include="*.tsx" --include="*.js" --include="*.json" 2>/dev/null | grep -v ".env.example"; then
+            echo "ERREUR : clé secrète Supabase détectée dans 1-FRONTEND/"
+            exit 1
+          fi
+          echo "OK : aucune clé secrète dans le frontend"
+
+  # ─────────────────────────────────────────────────
+  # Audit des dépendances (vulnérabilités connues)
+  # ─────────────────────────────────────────────────
+  dependances:
+    name: Audit des dépendances
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: '10'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+
+      - name: Installer les dépendances
+        run: pnpm install --frozen-lockfile
+
+      - name: Audit de sécurité (production uniquement)
+        run: pnpm audit --prod
+        # Les avertissements sur les devDeps ne bloquent pas le déploiement,
+        # mais une vulnérabilité dans une dep de production doit être corrigée.
+        continue-on-error: false

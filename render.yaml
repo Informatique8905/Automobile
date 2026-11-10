@@ -10,7 +10,7 @@ services:
     region: frankfurt     # la plus proche de la région Supabase Europe
     branch: main
     rootDir: .
-    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter api build
+    buildCommand: corepack enable && pnpm install --frozen-lockfile --prod=false && pnpm turbo run build --filter=api
     startCommand: pnpm --filter api start
     healthCheckPath: /sante
     autoDeploy: true
