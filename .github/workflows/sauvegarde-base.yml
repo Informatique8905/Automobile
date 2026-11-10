@@ -1,0 +1,61 @@
+name: Sauvegarde base de données
+
+on:
+  schedule:
+    # Tous les jours à 2 h 30 UTC (heure creuse pour Abidjan = 2 h 30 GMT)
+    - cron: '30 2 * * *'
+  workflow_dispatch:
+    # Déclenchement manuel depuis GitHub → Actions → Sauvegarde base de données → Run workflow
+
+jobs:
+  sauvegarde:
+    name: Export chiffré Supabase
+    runs-on: ubuntu-latest
+    steps:
+      - name: Installer le client PostgreSQL
+        run: sudo apt-get update -q && sudo apt-get install -y postgresql-client
+
+      - name: Installer age (chiffrement)
+        run: |
+          curl -sSL https://github.com/FiloSottile/age/releases/download/v1.2.1/age-v1.2.1-linux-amd64.tar.gz | tar xz
+          sudo mv age/age /usr/local/bin/
+
+      - name: Exporter et chiffrer la base
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          HORODATAGE=$(date -u +"%Y%m%d_%H%M%S")
+          FICHIER="sauvegarde_${HORODATAGE}.sql"
+          FICHIER_CHIFFRE="${FICHIER}.age"
+
+          # Export complet (schéma + données, sans les secrets Supabase internes)
+          pg_dump "$SUPABASE_DB_URL" \
+            --no-owner \
+            --no-acl \
+            --schema=public \
+            --schema=private \
+            --format=plain \
+            --file="$FICHIER"
+
+          # Chiffrement symétrique avec phrase de passe
+          echo "$BACKUP_PASSPHRASE" | age --passphrase --output "$FICHIER_CHIFFRE" "$FICHIER"
+          rm "$FICHIER"
+
+          echo "FICHIER_CHIFFRE=$FICHIER_CHIFFRE" >> "$GITHUB_ENV"
+          echo "TAILLE=$(wc -c < $FICHIER_CHIFFRE) octets"
+
+      - name: Téléverser la sauvegarde comme artefact GitHub
+        uses: actions/upload-artifact@v4
+        with:
+          name: sauvegarde-${{ github.run_id }}
+          path: ${{ env.FICHIER_CHIFFRE }}
+          # Rétention : 90 jours (limite GitHub gratuit)
+          retention-days: 90
+          if-no-files-found: error
+
+      - name: Vérification
+        run: |
+          echo "Sauvegarde chiffrée téléversée : $FICHIER_CHIFFRE"
+          echo "Pour restaurer (en local avec Supabase démarré) :"
+          echo "  age --decrypt sauvegarde_*.sql.age | psql postgresql://postgres:postgres@localhost:54322/postgres"
