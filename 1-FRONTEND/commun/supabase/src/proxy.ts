@@ -18,9 +18,20 @@ export async function rafraichirSession(requete: NextRequest) {
   // On commence avec une réponse "passe-plat" sans modification.
   let reponse = NextResponse.next({ request: requete });
 
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const cle = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  if (!url || !cle) {
+    throw new Error(
+      '[AutoMobile] Configuration Supabase manquante.\n' +
+      'Vérifiez que NEXT_PUBLIC_SUPABASE_URL et NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ' +
+      'sont définis dans votre fichier .env.local (développement) ou dans les variables ' +
+      "d'environnement de déploiement (production).",
+    );
+  }
+
   const supabase = createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    url,
+    cle,
     {
       cookies: {
         getAll: () => requete.cookies.getAll(),

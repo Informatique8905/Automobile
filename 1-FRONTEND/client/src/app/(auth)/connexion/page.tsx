@@ -34,6 +34,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { Eye, EyeOff, Loader2, Mail } from 'lucide-react';
 import { clientNavigateur } from '@plateforme/supabase/navigateur';
 import { cn } from '@plateforme/ui/utils';
+import { transitionEntree, transitionSucces, useMouvementReduit } from '@plateforme/ui/mouvement';
 import type { Provider } from '@supabase/supabase-js';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -65,6 +66,7 @@ function valider(valeurs: Champs): Erreurs {
 
 export default function PageConnexion() {
   const uid = useId();
+  const mouvementReduit = useMouvementReduit();
   const supabase = clientNavigateur();
 
   const [vue, setVue] = useState<Vue>('formulaire');
@@ -196,12 +198,7 @@ export default function PageConnexion() {
 
   const titreId = `${uid}-titre`;
 
-  const transition = {
-    initial: { opacity: 0, y: 6, filter: 'blur(3px)' },
-    animate: { opacity: 1, y: 0, filter: 'blur(0px)' },
-    exit: { opacity: 0, y: -6, filter: 'blur(3px)' },
-    transition: { duration: 0.22, ease: [0.23, 1, 0.32, 1] as const },
-  };
+  const transition = transitionEntree(mouvementReduit);
 
   return (
     <div className="grid min-h-dvh lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
@@ -687,6 +684,7 @@ function VueSucces({
   titreRef: React.RefObject<HTMLHeadingElement | null>;
   email: string;
 }) {
+  const mouvementReduit = useMouvementReduit();
   return (
     <div className="flex flex-col items-start">
       <span className="grid size-14 place-items-center rounded-2xl border border-[var(--couleur-succes)]/30 bg-[var(--couleur-succes-fond)]" aria-hidden="true">
@@ -700,7 +698,7 @@ function VueSucces({
             strokeLinejoin="round"
             initial={{ pathLength: 0 }}
             animate={{ pathLength: 1 }}
-            transition={{ duration: 0.36, delay: 0.08, ease: [0.23, 1, 0.32, 1] }}
+            transition={transitionSucces(mouvementReduit)}
           />
         </svg>
       </span>
@@ -731,9 +729,14 @@ function VueSucces({
   );
 }
 
+/**
+ * Panneau de marque — logo + promesse uniquement.
+ * Les vrais chiffres (get_platform_stats) seront intégrés en partie 4
+ * quand le site public sera construit. Aucun chiffre inventé ici.
+ */
 function PanneauMarque() {
   return (
-    <div className="relative flex w-full max-w-md flex-col justify-between gap-12 overflow-hidden rounded-3xl bg-white/10 p-10 ring-1 ring-white/20 backdrop-blur-sm">
+    <div className="relative flex w-full max-w-md flex-col items-center justify-center gap-10 overflow-hidden rounded-3xl bg-white/10 p-10 ring-1 ring-white/20 backdrop-blur-sm">
       {/* Grille de points décorative */}
       <div
         aria-hidden="true"
@@ -745,39 +748,25 @@ function PanneauMarque() {
         }}
       />
 
-      {/* Statistiques */}
-      <div className="relative grid grid-cols-2 gap-4">
-        {[
-          { valeur: '2 500+', label: 'véhicules disponibles' },
-          { valeur: '48 h', label: 'délai de livraison moyen' },
-          { valeur: '98 %', label: 'clients satisfaits' },
-          { valeur: '10 villes', label: "couvertes en Côte d'Ivoire" },
-        ].map(({ valeur, label }) => (
-          <div key={label} className="rounded-2xl bg-white/10 px-4 py-3 ring-1 ring-white/15">
-            <p className="text-[22px] font-bold text-white">{valeur}</p>
-            <p className="mt-0.5 text-[12px] text-white/70">{label}</p>
-          </div>
-        ))}
+      {/* Logo */}
+      <div className="relative text-center">
+        <p className="text-[32px] font-bold tracking-tight text-white">
+          Auto<span className="text-white/70">Mobile</span>
+        </p>
+        <p className="mt-1 text-[13px] font-medium uppercase tracking-widest text-white/50">
+          Côte d'Ivoire
+        </p>
       </div>
 
-      {/* Témoignage */}
-      <figure className="relative">
-        <svg viewBox="0 0 24 18" aria-hidden="true" className="mb-4 h-4 w-5 text-white/60">
-          <path d="M0 18V10.5C0 4.6 3.1 1.1 9.2 0l1 2.6C6.6 3.6 5 5.7 4.9 8.6H9.6V18H0Zm14.4 0V10.5C14.4 4.6 17.5 1.1 23.6 0l1 2.6c-3.6 1-5.2 3.1-5.3 6h4.7V18h-9.6Z" fill="currentColor"/>
-        </svg>
-        <blockquote className="text-[18px] font-medium leading-[1.4] text-white">
-          J'ai loué mon véhicule en 10 minutes depuis mon téléphone. Livraison le lendemain matin à Cocody.
-        </blockquote>
-        <figcaption className="mt-5 flex items-center gap-3">
-          <span className="grid size-9 place-items-center rounded-full bg-white/20 text-[13px] font-semibold text-white ring-1 ring-white/30">
-            AK
-          </span>
-          <span>
-            <p className="text-[13px] font-medium text-white">Awa Koné</p>
-            <p className="text-[12px] text-white/60">Cliente — Abidjan Plateau</p>
-          </span>
-        </figcaption>
-      </figure>
+      {/* Promesse */}
+      <div className="relative text-center">
+        <p className="text-[20px] font-semibold leading-snug text-white">
+          Louez ou achetez un véhicule en confiance, depuis votre téléphone.
+        </p>
+        <p className="mt-3 text-[14px] leading-relaxed text-white/70">
+          Partenaires vérifiés · Prix transparents · Paiement sécurisé
+        </p>
+      </div>
     </div>
   );
 }

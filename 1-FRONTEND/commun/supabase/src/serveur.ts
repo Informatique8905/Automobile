@@ -13,10 +13,25 @@ import { createServerClient } from '@supabase/ssr';
 import type { Database } from '@plateforme/types';
 
 export async function clientServeur() {
+  // cookies() marque la route comme dynamique : sans lui, Next essaierait de
+  // pré-rendre la page au build et le contrôle de configuration ci-dessous
+  // ferait échouer `next build` quand les variables ne sont pas encore injectées.
   const magasin = await cookies();
+
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const cle = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  if (!url || !cle) {
+    throw new Error(
+      '[AutoMobile] Configuration Supabase manquante.\n' +
+      'Vérifiez que NEXT_PUBLIC_SUPABASE_URL et NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ' +
+      'sont définis dans votre fichier .env.local (développement) ou dans les variables ' +
+      "d'environnement de déploiement (production).",
+    );
+  }
+
   return createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    url,
+    cle,
     {
       cookies: {
         getAll: () => magasin.getAll(),

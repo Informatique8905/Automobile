@@ -18,7 +18,7 @@
  *   AMOUNT_ABOVE_PROVIDER_LIMIT (plafond Jeko : proposer de contacter l'agence)
  * ═══════════════════════════════════════════════════════════════════
  */
-import { BadRequestException, Body, Controller, Post, ServiceUnavailableException } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Inject, Post, ServiceUnavailableException } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { z } from 'zod';
 import { LIMITES } from '@plateforme/securite-applicative';
@@ -26,7 +26,7 @@ import { env } from '../../noyau/config/env';
 import { Roles, UtilisateurCourant } from '../../noyau/auth/decorateurs';
 import type { Utilisateur } from '../../noyau/auth/decorateurs';
 import { BaseService } from '../../noyau/base/supabase.service';
-import { JekoClient } from '../commun/paiements-jeko/jeko.client';
+import { FOURNISSEUR_PAIEMENT, type FournisseurPaiement } from '../commun/paiements-jeko/fournisseur-paiement';
 
 const Demande = z.object({
   reservationId: z.uuid(),
@@ -38,7 +38,7 @@ const Demande = z.object({
 export class PaiementsClientController {
   constructor(
     private readonly base: BaseService,
-    private readonly jeko: JekoClient,
+    @Inject(FOURNISSEUR_PAIEMENT) private readonly paiement: FournisseurPaiement,
   ) {}
 
   @Post('initier')
@@ -61,15 +61,19 @@ export class PaiementsClientController {
     }
     if (paiement.status === 'succeeded') return { dejaPaye: true, reference: paiement.reference };
 
-    // 3. Session Jeko
+    // 3. Session chez le fournisseur (Jeko réel ou simulation selon PAIEMENT_MODE)
+    const urlRetour = env.PAIEMENT_MODE === 'jeko'
+      ? `${env.JEKO_RETURN_URL}?ref=${encodeURIComponent(paiement.reference)}`
+      : `${env.API_PUBLIC_URL}/paiement/retour?ref=${encodeURIComponent(paiement.reference)}`;
+
     let session;
     try {
-      session = await this.jeko.creerPaiement({
+      session = await this.paiement.creerPaiement({
         referenceMarchand: paiement.reference,
         montant: paiement.amount,
         devise: 'XOF',
         description: `Réservation ${paiement.reference}`,
-        urlRetour: `${env.JEKO_RETURN_URL}?ref=${encodeURIComponent(paiement.reference)}`,
+        urlRetour,
         urlNotification: `${env.API_PUBLIC_URL}/webhooks/jeko`,
         client: { email: u.email },
       });

@@ -13,13 +13,12 @@ export function clientNavigateur() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const cle = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
-  // Côté serveur pendant le prerendering (build) : les variables NEXT_PUBLIC_
-  // ne sont pas injectées si l'environnement n'a pas de .env.local.
-  // On utilise des valeurs factices pour que Next.js puisse générer les pages
-  // statiques sans faire d'appels réseau réels.
+  // Le prerender de `next build` s'exécute sans fenêtre : on y tolère une
+  // adresse factice pour générer les pages statiques. Ailleurs (SSR runtime,
+  // navigateur, dev), une variable manquante est une erreur de configuration.
+  const estBuild = process.env.NEXT_PHASE === 'phase-production-build';
   if (!url || !cle) {
-    if (typeof window !== 'undefined') {
-      // Exécution dans le navigateur : les variables DOIVENT être présentes.
+    if (typeof window !== 'undefined' || !estBuild) {
       throw new Error(
         '[AutoMobile] Configuration Supabase manquante.\n' +
         'Vérifiez que NEXT_PUBLIC_SUPABASE_URL et NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ' +
@@ -27,7 +26,6 @@ export function clientNavigateur() {
         "d'environnement de déploiement (production).",
       );
     }
-    // SSR / prerendering uniquement — jamais exécuté en production
     return createBrowserClient<Database>(
       'https://placeholder.supabase.co',
       'placeholder-anon-key',

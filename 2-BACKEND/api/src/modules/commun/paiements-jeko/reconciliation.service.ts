@@ -10,9 +10,9 @@
  * MÊME logique que le webhook (ApplicationPaiementService).
  * ═══════════════════════════════════════════════════════════════════
  */
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Inject, Logger } from '@nestjs/common';
 import { BaseService } from '../../../noyau/base/supabase.service';
-import { JekoClient } from './jeko.client';
+import { FOURNISSEUR_PAIEMENT, type FournisseurPaiement } from './fournisseur-paiement';
 import { ApplicationPaiementService } from './application-paiement.service';
 
 @Injectable()
@@ -21,7 +21,7 @@ export class ReconciliationService {
 
   constructor(
     private readonly base: BaseService,
-    private readonly jeko: JekoClient,
+    @Inject(FOURNISSEUR_PAIEMENT) private readonly paiement: FournisseurPaiement,
     private readonly application: ApplicationPaiementService,
   ) {}
 
@@ -43,7 +43,7 @@ export class ReconciliationService {
     let misAJour = 0;
     for (const p of enAttente ?? []) {
       try {
-        const tx = await this.jeko.obtenirTransaction(p.provider_transaction_id!);
+        const tx = await this.paiement.obtenirTransaction(p.provider_transaction_id!);
         const r = await this.application.appliquer(tx);
         if (r !== 'pending') misAJour++;
       } catch (e) {

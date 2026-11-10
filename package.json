@@ -3,7 +3,7 @@
   "private": true,
   "description": "Plateforme de location et de vente de véhicules — Côte d'Ivoire",
   "packageManager": "pnpm@10.0.0",
-  "engines": { "node": ">=20" },
+  "engines": { "node": ">=22" },
   "scripts": {
     "dev": "turbo run dev --parallel",
     "build": "turbo run build",

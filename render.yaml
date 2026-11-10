@@ -34,6 +34,13 @@ services:
         sync: false
       - key: CRON_SECRET          # généré par Render : le recopier dans le coffre Supabase (cron_render.sql)
         generateValue: true
+      # Paiement simulé pour le premier déploiement — passer à 'jeko' + vrais secrets au branchement Jeko
+      - key: PAIEMENT_MODE
+        value: simulation
+      - key: AUTORISER_PAIEMENT_SIMULATION
+        value: "true"
+      - key: PAIEMENT_SIMULATION_SECRET
+        sync: false
       - key: JEKO_API_URL
         sync: false
       - key: JEKO_API_KEY

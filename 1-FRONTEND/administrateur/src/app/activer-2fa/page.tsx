@@ -23,6 +23,7 @@ import { motion } from 'motion/react';
 import { Loader2, ShieldCheck } from 'lucide-react';
 import { clientNavigateur } from '@plateforme/supabase/navigateur';
 import { cn } from '@plateforme/ui/utils';
+import { transitionEntree, transitionSucces, useMouvementReduit } from '@plateforme/ui/mouvement';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -36,6 +37,7 @@ const LONGUEUR_CODE = 6;
 
 export default function PageActiver2FA() {
   const uid = useId();
+  const mouvementReduit = useMouvementReduit();
   const supabase = clientNavigateur();
 
   const [etape, setEtape] = useState<Etape>('chargement');
@@ -119,11 +121,7 @@ export default function PageActiver2FA() {
     }
   };
 
-  const transition = {
-    initial: { opacity: 0, y: 6, filter: 'blur(3px)' },
-    animate: { opacity: 1, y: 0, filter: 'blur(0px)' },
-    transition: { duration: 0.22, ease: [0.23, 1, 0.32, 1] as const },
-  };
+  const transition = transitionEntree(mouvementReduit);
 
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center bg-[var(--couleur-fond)] px-6 py-12">
@@ -333,7 +331,7 @@ export default function PageActiver2FA() {
                   strokeLinejoin="round"
                   initial={{ pathLength: 0 }}
                   animate={{ pathLength: 1 }}
-                  transition={{ duration: 0.36, delay: 0.08, ease: [0.23, 1, 0.32, 1] }}
+                  transition={transitionSucces(mouvementReduit)}
                 />
               </svg>
             </span>

@@ -21,6 +21,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { clientNavigateur } from '@plateforme/supabase/navigateur';
 import { cn } from '@plateforme/ui/utils';
+import { transitionEntree, transitionSucces, useMouvementReduit } from '@plateforme/ui/mouvement';
 import type { Provider } from '@supabase/supabase-js';
 
 // ─── Constantes ─────────────────────────────────────────────────────────────
@@ -38,6 +39,7 @@ function messageFriendly(msg: string): string {
 
 export default function PageConnexionVendeur() {
   const uid = useId();
+  const mouvementReduit = useMouvementReduit();
   const supabase = clientNavigateur();
 
   const [email, setEmail] = useState('');
@@ -105,12 +107,7 @@ export default function PageConnexionVendeur() {
     }
   };
 
-  const transition = {
-    initial: { opacity: 0, y: 6, filter: 'blur(3px)' },
-    animate: { opacity: 1, y: 0, filter: 'blur(0px)' },
-    exit: { opacity: 0, y: -6, filter: 'blur(3px)' },
-    transition: { duration: 0.22, ease: [0.23, 1, 0.32, 1] as const },
-  };
+  const transition = transitionEntree(mouvementReduit);
 
   return (
     <div className="grid min-h-dvh lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
@@ -229,7 +226,7 @@ export default function PageConnexionVendeur() {
                 <motion.div key="succes" {...transition} className="flex flex-col items-start">
                   <span className="grid size-14 place-items-center rounded-2xl border border-[var(--couleur-succes)]/30 bg-[var(--couleur-succes-fond)]" aria-hidden="true">
                     <svg viewBox="0 0 24 24" aria-hidden="true" className="size-7">
-                      <motion.path d="M5.5 12.5 10 17l8.5-9.5" fill="none" stroke="var(--couleur-succes)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.36, delay: 0.08 }} />
+                      <motion.path d="M5.5 12.5 10 17l8.5-9.5" fill="none" stroke="var(--couleur-succes)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={transitionSucces(mouvementReduit)} />
                     </svg>
                   </span>
                   <h1 className="mt-6 text-[28px] font-semibold tracking-tight text-[var(--couleur-texte)]">Connexion réussie</h1>
